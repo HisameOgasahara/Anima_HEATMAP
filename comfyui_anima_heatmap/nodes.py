@@ -12,6 +12,7 @@ import latent_preview
 
 from anima_heatmap import CaptureConfig, CaptureSession, load_maps, render_map, save_views, select_indices
 from .bridge import attach_capture, clean_conditioning, read_token_map
+from .phrases import split_phrases, resolve_phrase, describe_selection
 
 
 class AnimaHeatmapTextEncode:
@@ -142,8 +143,8 @@ class AnimaHeatmapView:
             "relation": (["image->text", "image->image"],),
             "branch": (["positive", "negative"],),
             "batch_index": ("INT", {"default": 0, "min": 0}),
-            "phrase": ("STRING", {"default": "cat"}),
-            "token_indices": ("STRING", {"default": "", "tooltip": "비우면 phrase로 찾습니다. 예: 3,4"}),
+            "phrase": ("STRING", {"default": "cat", "multiline": True, "tooltip": "프롬프트 표현 그대로 입력. 여러 단어/태그는 줄바꿈 또는 쉼표로 구분. 괄호·가중치는 자동 처리합니다."}),
+            "token_indices": ("STRING", {"default": "", "tooltip": "고급/디버깅용 수동 위치 선택. 보통은 비워 두세요. 입력하면 phrase보다 우선합니다."}),
             "occurrence": ("STRING", {"default": "all", "tooltip": "동일 단어의 전체 출현 또는 0부터 시작하는 출현 번호"}),
             "query_index": ("INT", {"default": -1, "min": -1, "tooltip": "-1이면 저장된 첫 이미지 query"}),
             "steps": ("STRING", {"default": "all"}), "layers": ("STRING", {"default": "all"}),
@@ -165,19 +166,34 @@ class AnimaHeatmapView:
              occurrence, query_index, steps, layers, heads, calls, view, aggregation,
              normalization, colormap, alpha, save_files):
         manifest = json.loads((Path(session) / "manifest.json").read_text(encoding="utf-8"))
-        token_count = len(manifest["token_maps"][branch]["ids"])
-        ids = select_indices(token_indices, token_count) if token_indices.strip() else None
-        items = load_maps(session, relation=relation, branch=branch, batch=batch_index,
-            phrase=phrase, token_indices=ids, occurrence=occurrence,
-            query_index=None if query_index == -1 else query_index,
-            steps=steps, layers=layers, heads=heads, calls=calls, view=view, aggregation=aggregation)
+        token_map = manifest["token_maps"][branch]
+        selections, info = [], []
+        if relation == "image->image":
+            selections = [("", None)]
+        elif token_indices.strip():
+            ids = select_indices(token_indices, len(token_map["ids"]))
+            selections = [("manual tokens", ids)]
+            info.append(describe_selection(token_map, phrase, ids, "수동 위치 선택"))
+        else:
+            for query in split_phrases(phrase):
+                ids, matched = resolve_phrase(token_map, query, occurrence)
+                selections.append((query, ids))
+                info.append(describe_selection(token_map, query, ids, matched))
+            if not selections:
+                raise ValueError("phrase에 프롬프트의 단어 또는 태그를 입력하세요.")
+        items = []
+        for query, ids in selections:
+            items.extend(load_maps(session, relation=relation, branch=branch, batch=batch_index,
+                phrase=query, token_indices=ids, occurrence=occurrence,
+                query_index=None if query_index == -1 else query_index,
+                steps=steps, layers=layers, heads=heads, calls=calls, view=view, aggregation=aggregation))
         if batch_index >= images.shape[0]:
             raise ValueError("이미지 batch 번호가 범위를 벗어났습니다.")
         base = images[batch_index].detach().cpu().float().numpy()
         value_range = (min(float(x["raw"].min()) for x in items), max(float(x["raw"].max()) for x in items))
         rendered = [render_map(item, image=base, alpha=alpha, colormap=colormap,
                     normalization=normalization, value_range=value_range) for item in items]
-        info = [item["label"] for item in items]
+        info.extend(f"출력 {i}: {item['label']}" for i, item in enumerate(items))
         if save_files:
             saved = save_views(items, Path(session) / "views", image=base, alpha=alpha,
                                colormap=colormap, normalization=normalization)

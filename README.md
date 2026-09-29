@@ -63,7 +63,11 @@ Anima Heatmap · Settings ────────────┤
 
 첫 실행은 Settings의 `image->text`, `heads=mean`, `branches=positive`로 시작할 수 있다. View에서 `phrase`에 프롬프트의 단어 또는 구를 입력한다. 토큰 표에서 직접 고르려면 `token_indices`에 `3,4`처럼 입력한다. 직접 지정한 번호가 phrase보다 우선한다.
 
-같은 단어가 여러 번 나오면 `occurrence=all`은 모든 출현을 모으고, `0`, `1` 등은 해당 출현만 선택한다. 단어 매칭은 토큰 경계를 보존한다. SentencePiece의 특수 문자/미지 토큰 때문에 자동 매칭이 되지 않으면 토큰 번호를 사용한다.
+View의 `phrase`에는 `plana (blue archive)`처럼 프롬프트에 쓴 표현을 그대로 입력한다. 커스텀 노드가 문자 그대로의 표현을 먼저 찾고, 없으면 ComfyUI의 괄호·가중치 문법을 처리한 표현으로 찾는다. 생성 프롬프트나 저장된 attention은 변경하지 않는다. 이 처리는 기존 저장 세션에도 적용된다.
+
+여러 키워드는 줄바꿈이나 쉼표로 구분한다. 예를 들어 `plana (blue archive), blue_ribbon, white school uniform`은 각각 별도의 지도로 출력한다. 괄호 안의 쉼표는 구분자로 사용하지 않는다. `details`를 `Preview Any`에 연결하면 입력 표현, 실제 검색 표현, 선택된 토큰 위치·사전 ID·문자 조각과 출력 이미지 순서를 확인할 수 있다. `token_indices`는 비워 두고 사용하며, 직접 입력하면 자동 검색보다 우선한다.
+
+같은 단어가 여러 번 나오면 `occurrence=all`은 모든 출현을 모으고, `0`, `1` 등은 해당 출현만 선택한다. 단어 매칭은 토큰 경계를 보존한다. SentencePiece의 특수 문자/미지 토큰 때문에 자동 매칭이 되지 않으면 Text Encode의 `token_table`을 `Preview Any`로 확인할 수 있다.
 
 이미지 내부 관계를 보려면 Settings에서 `both` 또는 `image->image`를 고른다. `image_queries=center`는 가운데 patch, `sample:9`는 전체 인덱스에서 균등하게 고른 9개, `all`은 모든 patch를 저장한다. View의 `query_index=-1`은 저장한 첫 query를 사용한다. 실제 저장한 번호는 세션 manifest에 기록된다. 인덱스는 위에서 아래, 왼쪽에서 오른쪽 순서다.
 
