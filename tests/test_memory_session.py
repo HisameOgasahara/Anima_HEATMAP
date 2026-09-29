@@ -13,7 +13,7 @@ def test_memory_and_disk_maps_match(tmp_path, view, aggregation):
     q, k = torch.randn(1, 2, 4, 3), torch.randn(1, 2, 3, 3)
     sessions = []
     for save_raw in (False, True):
-        with CaptureSession(tmp_path, CaptureConfig(save_raw=save_raw, heads="all"), token_maps=tokens) as session:
+        with CaptureSession(tmp_path, CaptureConfig(save_raw=save_raw, heads="all", keep_records=True), token_maps=tokens) as session:
             for step in range(2):
                 for layer in range(2):
                     session.capture(q, k, relation="image->text", branch="positive", step=step,

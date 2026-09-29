@@ -71,6 +71,11 @@ def load_maps(session, *, relation="image->text", branch="positive", batch=0,
         raise ValueError(f"완료되지 않은 세션입니다: {manifest['status']} / {manifest.get('error')}")
     if manifest.get("storage") == "memory" and not memory:
         raise ValueError("메모리 세션은 Sampler의 session 출력을 직접 연결하세요. 폴더 재분석에는 save_raw=True가 필요합니다.")
+    if manifest.get("aggregated"):
+        if view != "aggregate" or any(x != "all" for x in (steps, layers, calls)):
+            raise ValueError("통합 세션은 aggregate 보기만 지원합니다. 단계·layer별 분석은 keep_records=True로 다시 수집하세요.")
+        if aggregation != manifest["config"]["aggregation"]:
+            raise ValueError("View aggregation을 Settings의 aggregation과 맞추세요. 집계 변경은 다시 수집해야 합니다.")
     records = [r for r in manifest["records"] if r["relation"] == relation and r["branch"] == branch]
     if not records:
         raise ValueError("선택한 관계/분기의 기록이 없습니다. CFG=1이면 부정 분기가 실행되지 않을 수 있습니다.")
@@ -136,7 +141,7 @@ def load_maps(session, *, relation="image->text", branch="positive", batch=0,
             raw = np.mean([a for _, a in items], axis=0)
         output.append(dict(label=f"{branch} {relation} {label} {group}", raw=raw,
                            grid=items[0][0]["grid"], valid_grid=items[0][0]["valid_grid"],
-                           record_count=len(items), group=group))
+                           record_count=sum(r.get("source_records", 1) for r, _ in items), group=group))
     return output
 
 

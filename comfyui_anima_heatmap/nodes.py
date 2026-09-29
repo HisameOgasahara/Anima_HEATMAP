@@ -59,19 +59,23 @@ class AnimaHeatmapSettings:
             "query_chunk": ("INT", {"default": 128, "min": 1, "max": 4096}),
             "key_chunk": ("INT", {"default": 256, "min": 1, "max": 4096}),
             "max_capture_gib": ("FLOAT", {"default": 8.0, "min": 0.01, "max": 1024.0}),
-        }, "optional": {"save_raw": ("BOOLEAN", {"default": False})}}
+        }, "optional": {
+            "save_raw": ("BOOLEAN", {"default": False, "tooltip": "원본 파일 보관. 켜면 상세 기록을 디스크에 저장합니다."}),
+            "keep_records": ("BOOLEAN", {"default": False, "tooltip": "켜면 단계·layer별 원본을 유지합니다. 끄면 생성 중 통합합니다."}),
+            "aggregation": (["mean", "daam"],),
+        }}
 
     RETURN_TYPES = ("ANIMA_HEATMAP_SETTINGS",)
     FUNCTION = "configure"
     CATEGORY = "Anima Heatmap"
 
     def configure(self, relations, steps, layers, heads, branches, image_queries, text_keys,
-                  query_chunk, key_chunk, max_capture_gib, save_raw=False):
+                  query_chunk, key_chunk, max_capture_gib, save_raw=False, keep_records=False, aggregation="mean"):
         return (CaptureConfig(relations=("image->text", "image->image") if relations == "both" else (relations,),
             steps=steps, layers=layers, heads=heads,
             branches=("positive", "negative") if branches == "both" else (branches,),
             image_queries=image_queries, text_keys=text_keys, query_chunk=query_chunk, key_chunk=key_chunk,
-            max_capture_bytes=int(max_capture_gib * 1024**3), save_raw=save_raw),)
+            max_capture_bytes=int(max_capture_gib * 1024**3), save_raw=save_raw, keep_records=keep_records, aggregation=aggregation),)
 
 
 class AnimaHeatmapSampler:

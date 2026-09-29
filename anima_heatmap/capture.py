@@ -13,6 +13,7 @@ import numpy as np
 from .compute import compute_attention
 from .writer import ArrayWriter
 from .diagnostics import read_counters
+from .aggregate import RunningMap
 
 
 def select_indices(spec, count, *, grid=None):
@@ -59,8 +60,12 @@ class CaptureConfig:
     max_pending_bytes: int = 256 * 1024**2
     save_raw: bool = False
     memory_reserve_bytes: int = 256 * 1024**2
+    keep_records: bool = False
+    aggregation: str = "mean"
 
     def __post_init__(self):
+        if self.aggregation not in ("mean", "daam"):
+            raise ValueError("aggregation은 mean 또는 daam이어야 합니다.")
         if not self.relations or set(self.relations) - {"image->text", "image->image"}:
             raise ValueError("Anima 본체는 image->text / image->image를 지원합니다.")
         if not self.branches or set(self.branches) - {"positive", "negative"}:
@@ -81,6 +86,8 @@ class CaptureSession:
         self.records = []
         self.capture_bytes = 0
         self.arrays = {}
+        self.aggregate = not (self.config.keep_records or self.config.save_raw)
+        self.running_maps = {}
         self.lock = threading.RLock()
         self.manifest = dict(schema_version=1, status="running", storage="disk" if self.config.save_raw else "memory", config=asdict(self.config),
                              token_maps=self.token_maps, metadata=metadata or {}, records=self.records)
@@ -110,15 +117,24 @@ class CaptureSession:
             raise ValueError("self-attention key 격자가 query 격자와 다릅니다.")
         if relation == "image->text":
             kids = select_indices(self.config.text_keys, key.shape[2])
+            if self.aggregate:
+                pieces = self.token_maps.get(branch, {}).get("pieces", [])
+                # Preserve original key positions and full-key softmax denominator.
+                if pieces:
+                    kids = [i for i in kids if i < len(pieces) and pieces[i] not in ("<pad>", "</s>")]
+                    if not kids:
+                        raise ValueError("통합할 프롬프트 토큰이 없습니다.")
         heads = self.config.heads
         if heads not in ("all", "mean"):
             heads = select_indices(heads, query.shape[1])
         head_ids = ["mean"] if heads == "mean" else list(range(query.shape[1])) if heads == "all" else heads
         size = query.shape[0] * len(head_ids) * len(qids) * len(kids) * 4
+        group = (relation, branch)
+        new_bytes = size if not self.aggregate else (size * (2 if self.config.aggregation == "daam" else 1) if group not in self.running_maps else 0)
         with self.lock:
             if self.manifest["status"] != "running":
                 raise RuntimeError("종료된 세션에는 기록할 수 없습니다.")
-            if self.capture_bytes + size > self.config.max_capture_bytes:
+            if self.capture_bytes + new_bytes > self.config.max_capture_bytes:
                 raise MemoryError("수집 용량 한도를 초과합니다. steps/layers/heads/image_queries를 줄이세요.")
             if not self.config.save_raw:
                 available = read_counters("/proc/meminfo").get("MemAvailable")
@@ -127,17 +143,25 @@ class CaptureSession:
             values = compute_attention(query, key, query_indices=qids, key_indices=kids,
                 heads=heads, query_chunk=self.config.query_chunk, key_chunk=self.config.key_chunk, mask=mask)
             filename = f"raw/{len(self.records):06d}.npy"
+            record = dict(file=filename, relation=relation, branch=branch,
+                step=int(step), call=int(call), layer=int(layer), sigma=sigma,
+                grid=list(grid), valid_grid=list(valid_grid or grid), query_indices=qids,
+                key_indices=kids, head_ids=head_ids, key_count=int(key.shape[2]),
+                total_heads=int(query.shape[1]), shape=list(values.shape))
+            if self.aggregate:
+                if group not in self.running_maps:
+                    self.running_maps[group] = RunningMap(record, self.config.aggregation)
+                    self.records.append(record)
+                self.running_maps[group].add(values.numpy(), record)
+                self.capture_bytes += new_bytes
+                return
             if self.writer is not None:
                 self.writer.submit(self.path / filename, values.numpy(), step=int(step), call=int(call),
                            layer=int(layer), relation=relation, branch=branch)
             else:
                 self.arrays[filename] = values.numpy()
             self.capture_bytes += size
-            self.records.append(dict(file=filename, relation=relation, branch=branch,
-                step=int(step), call=int(call), layer=int(layer), sigma=sigma,
-                grid=list(grid), valid_grid=list(valid_grid or grid), query_indices=qids,
-                key_indices=kids, head_ids=head_ids, key_count=int(key.shape[2]),
-                total_heads=int(query.shape[1]), shape=list(values.shape)))
+            self.records.append(record)
 
     def finish(self, error=None):
         with self.lock:
@@ -148,10 +172,19 @@ class CaptureSession:
             except Exception as exc:
                 write_error = exc
             failure = error or write_error
+            if self.aggregate and not failure:
+                for running in self.running_maps.values():
+                    record = running.record
+                    self.arrays[record["file"]] = running.finish()
+                    record.update(aggregation=self.config.aggregation, source_records=running.count)
+                self.manifest["aggregated"] = True
+                self.capture_bytes = sum(a.nbytes for a in self.arrays.values())
+                self.running_maps.clear()
             self.manifest.update(status="failed" if failure else "complete", error=str(failure) if failure else None,
                                  capture_bytes=self.capture_bytes, peak_pending_bytes=self.writer.peak_pending if self.writer else 0)
             if failure:
                 self.arrays.clear()
+                self.running_maps.clear()
             self._write_manifest()
             if write_error is not None and error is None:
                 raise write_error
