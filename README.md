@@ -118,6 +118,8 @@ with CaptureSession(output_root, config, token_maps=token_maps) as capture:
 
 [Colab에서 노트북 열기](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/main/notebooks/Anima_Heatmap_ComfyUI.ipynb)
 
+Colab 메뉴의 `런타임 → 런타임 유형 변경`에서 GPU를 선택한다.
+
 GPU 런타임을 선택하고 셀을 순서대로 실행한다. 기본 설정은 `HisameOgasahara/Anima_HEATMAP`의 `main` 브랜치를 clone하여 저장소 루트의 모듈과 노드를 설치한다. ZIP 업로드는 필요하지 않다.
 
 다른 저장소를 사용하려면 설정 셀의 `SOURCE_REPO`, `SOURCE_REF`, `SOURCE_SUBDIR`를 변경한다. ZIP으로 설치하려면 `SOURCE_REPO`를 비운다. ZIP에는 `anima_heatmap`, `comfyui_anima_heatmap`, `notebooks`, `pyproject.toml`이 필요하며 `.venv`, `.tools`, 출력 데이터는 넣지 않는다.
