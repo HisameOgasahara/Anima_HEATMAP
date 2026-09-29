@@ -4,7 +4,7 @@ Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 
 
 ## Example
 
-[생성 이미지 · 워크플로](example/generated.png)
+![원본 생성 이미지](example/generated.png)
 
 | 키워드 | 히트맵 | 오버레이 |
 | --- | --- | --- |
@@ -12,7 +12,7 @@ Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 
 | `1girl` | ![1girl 히트맵](example/heatmap_1girl.png) | ![1girl 오버레이](example/overlay_1girl.png) |
 | `aoi erika` | ![aoi erika 히트맵](example/heatmap_aoi_erika.png) | ![aoi erika 오버레이](example/overlay_aoi_erika.png) |
 
-PNG에 워크플로가 포함되어 있다. [다운로드·불러오기](example/README.md)
+[워크플로 포함 PNG 다운로드](example/generated.png?raw=true) → ComfyUI 캔버스에 드래그.
 
 ## 환경·모델
 
