@@ -4,11 +4,13 @@ Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 
 
 ## Example
 
-추적 키워드: `aoi erika`
+[생성 이미지 · 워크플로](example/generated.png)
 
-| 생성 이미지 | 히트맵 | 오버레이 |
+| 키워드 | 히트맵 | 오버레이 |
 | --- | --- | --- |
-| ![생성 이미지](example/generated.png) | ![히트맵](example/heatmap.png) | ![오버레이](example/overlay.png) |
+| `sketchbook` | ![sketchbook 히트맵](example/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/overlay_sketchbook.png) |
+| `1girl` | ![1girl 히트맵](example/heatmap_1girl.png) | ![1girl 오버레이](example/overlay_1girl.png) |
+| `aoi erika` | ![aoi erika 히트맵](example/heatmap.png) | ![aoi erika 오버레이](example/overlay.png) |
 
 PNG에 워크플로가 포함되어 있다. [다운로드·불러오기](example/README.md)
 
@@ -48,6 +50,11 @@ ComfyUI 재시작 → 예제 PNG 드래그 → View의 `phrase` 입력 → 실�
 여러 키워드는 쉼표나 줄바꿈으로 구분한다.
 
 기본은 생성 중 통합이며 Sampler의 `session`을 View에 연결한다. 키워드는 실행 후에도 바꿀 수 있다. Settings와 View의 `aggregation`을 맞춘다. 단계·layer별 원본 분석은 `keep_records=True`, 원본 파일 보관은 `save_raw=True`를 사용한다.
+
+| 집계 모드 | 방식 |
+| --- | --- |
+| `mean` | 선택한 head와 수집 기록을 평균 |
+| `daam` | head 합 → 모델 호출별 layer 평균 → 호출 전체 합 |
 
 ## 구조
 
