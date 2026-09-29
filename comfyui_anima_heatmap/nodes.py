@@ -14,6 +14,7 @@ from anima_heatmap import CaptureConfig, CaptureSession, load_maps, render_map, 
 from .bridge import attach_capture, clean_conditioning, read_token_map
 from .phrases import split_phrases, resolve_phrase, describe_selection
 from .labels import label_images
+from anima_heatmap.profiling import sampling_step
 
 
 class AnimaHeatmapTextEncode:
@@ -105,6 +106,7 @@ class AnimaHeatmapSampler:
                 def callback(step, x0, x, total):
                     if preview:
                         preview(step, x0, x, total)
+                    sampling_step(step)
 
                 samples = comfy.sample.sample(patched, noise, steps, cfg, sampler_name, scheduler,
                     clean_conditioning(positive), clean_conditioning(negative), latent,

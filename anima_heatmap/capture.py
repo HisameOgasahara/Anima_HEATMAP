@@ -11,7 +11,7 @@ import uuid
 import numpy as np
 
 from .compute import compute_attention
-from .profiling import measure
+from .profiling import save_array
 
 
 def select_indices(spec, count, *, grid=None):
@@ -116,8 +116,8 @@ class CaptureSession:
             values = compute_attention(query, key, query_indices=qids, key_indices=kids,
                 heads=heads, query_chunk=self.config.query_chunk, key_chunk=self.config.key_chunk, mask=mask)
             filename = f"raw/{len(self.records):06d}.npy"
-            with measure("file_save"):
-                np.save(self.path / filename, values.numpy(), allow_pickle=False)
+            save_array(self.path / filename, values.numpy(), step=int(step), call=int(call),
+                       layer=int(layer), relation=relation, branch=branch)
             self.capture_bytes += size
             self.records.append(dict(file=filename, relation=relation, branch=branch,
                 step=int(step), call=int(call), layer=int(layer), sigma=sigma,

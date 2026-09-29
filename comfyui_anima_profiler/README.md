@@ -1,30 +1,42 @@
 # Anima Profiler
 
-Anima Heatmap 샘플러 내부의 attention 계산·CPU 전송·NPY 저장 시간을 측정한다.
+Anima Heatmap 샘플러의 계산·전송·저장 병목을 측정한다.
 
-## 설치
+## 사용
 
-Anima Heatmap 최신 소스와 공통 Python 모듈이 필요하다. Colab 노트북의 설치 셀에서 함께 설치된다.
+1. 최신 소스·설치 셀을 실행하고 ComfyUI를 재시작한다.
+2. 기존 Heatmap KSampler 대신 `Anima Profiler · Heatmap KSampler`를 연결한다.
+3. `report`를 `Preview Any`에 연결한다. 실행 후 `profile_path`의 JSON과 같은 폴더의 보고서를 확인한다.
 
-로컬에서는 저장소 루트에서 실행하고 ComfyUI를 재시작한다.
+| 설정 | 기본값 | 의미 |
+| --- | --- | --- |
+| `trace_steps` | 2 | 시작부터 PyTorch CPU·CUDA trace를 수집할 샘플러 스텝 수 |
+| `storage_probe_mib` | 64 | 실제 attention 파일에서 추출해 RAM·저장 폴더에 3회 저장할 데이터의 최대 MiB |
+
+전체 실행의 저장·메모리 통계는 끝까지 수집한다. GPU 구간별 동기화와 PyTorch trace는 실행 시간을 늘리므로, 측정 실행의 병목 비중을 비교한다.
+
+## 결과
+
+| 파일 | 내용 |
+| --- | --- |
+| `profile_report.txt` | 병목 순위, 저장 세부 시간·처리량, 비교 실험, 메모리 지표, 주요 연산 |
+| `profile.json` | 파일별 크기·단계·layer·시간·스레드 CPU 시간, 메모리·I/O 상태, trace 요약 |
+| `torch_trace.json` | CPU 연산·CUDA 커널·메모리 할당·사용자 구간 타임라인 |
+| `torch_operators.txt` | trace 구간의 CPU·GPU 연산별 시간 순위 |
+
+`torch_trace.json`은 [Perfetto](https://ui.perfetto.dev/)에서 열 수 있다.
+
+저장 측정은 `open`, `numpy_write`(NPY 헤더·데이터 쓰기), `close`로 구분한다. RAM·파일 비교 실험은 생성 종료 후 실행하며, 버퍼 쓰기와 `fsync` 대기를 따로 기록한다. 실험 파일은 완료 후 삭제한다. Linux에서는 RAM 여유·dirty/writeback·프로세스 RSS·swap·page fault·I/O pressure도 기록한다. 시스템 지표는 다른 프로세스의 영향도 포함한다.
+
+`diagnostic_status=partial`이면 `diagnostic_errors`에 누락된 측정과 실패 원인이 표시된다. CUDA kernel 수집이 비어 있으면 CPU 측정만으로 GPU trace 성공을 표시하지 않는다.
+
+## 로컬 설치
+
+저장소 루트에서 실행한다. Colab 설치 셀은 이 노드를 함께 설치한다.
 
 ```bat
 uv pip install --python "<ComfyUI Python 경로>" -e .
 xcopy comfyui_anima_profiler "<ComfyUI 경로>\custom_nodes\comfyui_anima_profiler\" /E /I
 ```
 
-## 사용
-
-1. 기존 Heatmap KSampler를 `Anima Profiler · Heatmap KSampler`로 교체하고 같은 입력을 연결한다.
-2. `latent`·`session`은 기존처럼 연결하고, `report`는 `Preview Any`에 연결한다.
-3. 실행 후 표기된 시간과 세션 폴더의 `profile.json`을 확인한다.
-
-| 항목 | 측정 범위 |
-| --- | --- |
-| 샘플러 전체 | 생성·attention 수집·세션 마무리 |
-| attention 계산·준비 | Q/K 처리·확률 계산·결과 검사 등, CPU 전송 시간 제외 |
-| CPU 전송 | attention 결과의 `.cpu()` 호출 |
-| attention NPY 저장 | 수집 기록의 `np.save` 호출 |
-| 나머지 생성·실행 | 전체에서 attention 계산·전송·NPY 저장을 뺀 시간 |
-
-CPU 전송 횟수와 메모리 부족 분할 전환 횟수도 기록한다. GPU 동기화를 사용하는 구간별 경과 시간이며, 측정 자체의 추가 비용이 포함된다. `attention_total`은 계산과 전송의 합이다. View의 후처리 시간은 별도다.
+[PyTorch Profiler](https://docs.pytorch.org/docs/stable/profiler)
