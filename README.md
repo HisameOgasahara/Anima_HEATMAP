@@ -1,24 +1,33 @@
 # Anima Heatmap
 
-Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 시각화하는 Python 모듈과 ComfyUI 커스텀 노드.
+[English](README.md) | [한국어](README_KR.md)
+
+A Python module and ComfyUI custom nodes for capturing and visualizing Anima image-to-text and image-to-image attention.
 
 ## Example
 
-![원본 생성 이미지](example/generated.png)
+Prompt excerpt:
 
-| 키워드 | 히트맵 | 오버레이 |
+```text
+masterpiece, best quality, ..., 1girl, aoi erika, green eyes, heaven burns red,
+..., brown vest, red miniskirt, ..., holding sketchbook, from above, ..., sunset, ...
+```
+
+![Generated image](example/generated.png)
+
+| Keyword | Heatmap | Overlay |
 | --- | --- | --- |
-| `sketchbook` | ![sketchbook 히트맵](example/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/overlay_sketchbook.png) |
-| `1girl` | ![1girl 히트맵](example/heatmap_1girl.png) | ![1girl 오버레이](example/overlay_1girl.png) |
-| `aoi erika` | ![aoi erika 히트맵](example/heatmap_aoi_erika.png) | ![aoi erika 오버레이](example/overlay_aoi_erika.png) |
+| `sketchbook` | ![sketchbook Heatmap](example/heatmap_sketchbook.png) | ![sketchbook Overlay](example/overlay_sketchbook.png) |
+| `1girl` | ![1girl Heatmap](example/heatmap_1girl.png) | ![1girl Overlay](example/overlay_1girl.png) |
+| `aoi erika` | ![aoi erika Heatmap](example/heatmap_aoi_erika.png) | ![aoi erika Overlay](example/overlay_aoi_erika.png) |
 
-[워크플로 포함 PNG 다운로드](example/generated.png?raw=true) → ComfyUI 캔버스에 드래그.
+[Download the workflow PNG](example/generated.png?raw=true) → drag it onto the ComfyUI canvas.
 
-## 환경·모델
+## Environment & Models
 
-실행 확인 환경:
+Tested environment:
 
-| 항목 | 버전·환경 |
+| Component | Version / Environment |
 | --- | --- |
 | OS | Google Colab · Linux |
 | Python | 3.13.15 |
@@ -27,57 +36,57 @@ Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 
 | Frontend | 1.53.6 |
 | GPU | NVIDIA Tesla T4 · VRAM 14.56 GB |
 
-| 구성 | 모델 |
+| Component | Model |
 | --- | --- |
 | Diffusion | [Anima Base](https://huggingface.co/circlestone-labs/Anima) |
 | Text encoder | Qwen 3 0.6B Base |
 | VAE | Qwen Image VAE |
 
-## 설치
+## Installation
 
-[Colab에서 실행](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/main/notebooks/Anima_Heatmap_ComfyUI.ipynb): GPU 런타임을 선택하고 셀을 순서대로 실행한다.
+[Run in Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/main/notebooks/Anima_Heatmap_ComfyUI.ipynb): select a GPU runtime and run the cells in order.
 
-로컬 설치 (Windows cmd):
+Local installation (Windows cmd):
 
 ```bat
 git clone https://github.com/HisameOgasahara/Anima_HEATMAP.git
 cd Anima_HEATMAP
-uv pip install --python "<ComfyUI Python 경로>" -e .
-xcopy comfyui_anima_heatmap "<ComfyUI 경로>\custom_nodes\comfyui_anima_heatmap\" /E /I
+uv pip install --python "<ComfyUI Python path>" -e .
+xcopy comfyui_anima_heatmap "<ComfyUI path>\custom_nodes\comfyui_anima_heatmap\" /E /I
 ```
 
-ComfyUI 재시작 → 예제 PNG 드래그 → View의 `phrase` 입력 → 실행.
-여러 키워드는 쉼표나 줄바꿈으로 구분한다.
+Restart ComfyUI → drag in an example PNG → enter `phrase` in View → run.
+Separate multiple keywords with commas or newlines.
 
-기본은 생성 중 통합이며 Sampler의 `session`을 View에 연결한다. 키워드는 실행 후에도 바꿀 수 있다. Settings와 View의 `aggregation`을 맞춘다. 단계·layer별 원본 분석은 `keep_records=True`, 원본 파일 보관은 `save_raw=True`를 사용한다.
+Maps are aggregated during sampling by default. Connect the Sampler’s `session` to View; keywords can be changed afterward. Match `aggregation` in Settings and View. Use `keep_records=True` for per-step/layer records or `save_raw=True` to save raw files.
 
-| 집계 모드 | 방식 |
+| Aggregation | Method |
 | --- | --- |
-| `mean` | 선택한 head와 수집 기록을 평균 |
-| `daam` | head 합 → 모델 호출별 layer 평균 → 호출 전체 합 |
+| `mean` | Average selected heads and captured records |
+| `daam` | Sum heads → average layers within each model call → sum calls |
 
-## 구조
+## Project Structure
 
-| 경로 | 역할 |
+| Path | Purpose |
 | --- | --- |
-| `anima_heatmap/` | Q/K → attention 확률 → 집계 → 히트맵·오버레이 |
-| `comfyui_anima_heatmap/` | 모델 연결·키워드 선택·ComfyUI 노드 |
-| [`comfyui_anima_profiler/`](comfyui_anima_profiler/README.md) | 샘플러 내부 계산·전송·저장 시간 측정 |
-| `notebooks/` | Colab 설치·모델 다운로드·서버·터널 실행 |
-| `example/` | 워크플로 포함 PNG |
-| `tests/` | 테스트 |
+| `anima_heatmap/` | Q/K → attention probabilities → aggregation → heatmaps and overlays |
+| `comfyui_anima_heatmap/` | Model integration, keyword selection, and ComfyUI nodes |
+| [`comfyui_anima_profiler/`](comfyui_anima_profiler/README.md) | Sampling compute, transfer, and storage profiling |
+| `notebooks/` | Colab setup, model downloads, server, and tunnel |
+| `example/` | PNGs with embedded workflows |
+| `tests/` | Tests |
 
-## 독립 모듈
+## Standalone Module
 
 ```bat
 uv venv .venv
 uv pip install --python .venv\Scripts\python.exe -e .
-.venv\Scripts\python.exe -m anima_heatmap "<세션 폴더>" --phrase "blue hair" --image "<이미지.png>" --output "<출력 폴더>"
+.venv\Scripts\python.exe -m anima_heatmap "<session directory>" --phrase "blue hair" --image "<image.png>" --output "<output directory>"
 ```
 
-세션 저장 위치: `ComfyUI/output/anima_heatmap/`
+Session directory: `ComfyUI/output/anima_heatmap/`
 
-## 참조
+## References
 
 - [Anima](https://huggingface.co/circlestone-labs/Anima)
 - [ComfyUI Anima](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/anima/model.py)
