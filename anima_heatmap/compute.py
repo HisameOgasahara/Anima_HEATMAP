@@ -31,6 +31,7 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
     output = torch.empty(query.shape[0], 1 if heads == "mean" else len(hids),
                          len(qids), len(kids), dtype=torch.float32, device="cpu")
     with torch.no_grad():
+        selected_query = query.detach() if hids == list(range(query.shape[1])) else query.detach()[:, hids]
         k = key.detach()[:, hids].float()
         expanded_mask = None
         if mask is not None:
@@ -44,9 +45,30 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                 logits = logits.masked_fill(~m, -torch.inf) if m.dtype == torch.bool else logits + m
             return logits
 
+        def compute_full_keys(q, positions):
+            logits = scores(q, positions, slice(None))
+            blocked = torch.isneginf(logits).all(dim=-1, keepdim=True)
+            probabilities = torch.softmax(logits, dim=-1)
+            probabilities.masked_fill_(blocked, 0)
+            if kids != list(range(k.shape[2])):
+                probabilities = probabilities[:, :, :, kids]
+            if heads == "mean":
+                probabilities = probabilities.mean(dim=1, keepdim=True)
+            return probabilities.cpu()
+
+        split_keys = False
         for start in range(0, len(qids), query_chunk):
             positions = qids[start:start + query_chunk]
-            q = query.detach()[:, hids][:, :, positions].float()
+            q = selected_query[:, :, positions].float()
+            if not split_keys:
+                try:
+                    values = compute_full_keys(q, positions)
+                except torch.OutOfMemoryError:
+                    # Retry with bounded key chunks for the rest of this record.
+                    split_keys = True
+                else:
+                    output[:, :, start:start + len(positions)] = values
+                    continue
             denominator = torch.full(q.shape[:-1], -torch.inf, device=q.device)
             for offset in range(0, k.shape[2], key_chunk):
                 logits = scores(q, positions, slice(offset, offset + key_chunk))
@@ -56,10 +78,10 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                 logits = scores(q, positions, selected)
                 probabilities = torch.exp(logits - denominator[..., None])
                 probabilities = torch.where(torch.isneginf(denominator[..., None]), 0, probabilities)
-                if not torch.isfinite(probabilities).all():
-                    raise ValueError("attention에 NaN/Inf가 있습니다. Q/K와 mask를 확인하세요.")
                 if heads == "mean":
                     probabilities = probabilities.mean(dim=1, keepdim=True)
                 output[:, :, start:start + len(positions), offset:offset + len(selected)] = probabilities.cpu()
+    if not torch.isfinite(output).all():
+        raise ValueError("attention에 NaN/Inf가 있습니다. Q/K와 mask를 확인하세요.")
     return output
 

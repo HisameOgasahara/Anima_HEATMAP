@@ -6,7 +6,8 @@ from anima_heatmap import compute_attention
 
 @pytest.mark.parametrize("heads", ["mean", "all", [1, 3]])
 @pytest.mark.parametrize("masked", [False, True])
-def test_chunked_matches_full_softmax(heads, masked):
+@pytest.mark.parametrize("fallback", [False, True])
+def test_chunked_matches_full_softmax(heads, masked, fallback, monkeypatch):
     torch.manual_seed(17)
     q, k = torch.randn(2, 4, 7, 8), torch.randn(2, 4, 11, 8)
     mask = torch.rand(7, 11) > 0.3 if masked else None
@@ -20,6 +21,10 @@ def test_chunked_matches_full_softmax(heads, masked):
         expected = expected.mean(1, keepdim=True)
     elif isinstance(heads, list):
         expected = expected[:, heads]
+    if fallback:
+        def out_of_memory(*args, **kwargs):
+            raise torch.OutOfMemoryError("simulated full-key allocation failure")
+        monkeypatch.setattr(torch, "softmax", out_of_memory)
     actual = compute_attention(q, k, query_indices=[0, 3, 6], key_indices=[2, 7],
                                heads=heads, mask=mask, query_chunk=2, key_chunk=3)
     torch.testing.assert_close(actual, expected, rtol=2e-5, atol=1e-7)
@@ -40,4 +45,19 @@ def test_selected_keys_use_full_denominator():
     q, k = torch.zeros(1, 1, 2, 4), torch.zeros(1, 1, 10, 4)
     actual = compute_attention(q, k, key_indices=[3])
     torch.testing.assert_close(actual, torch.full((1, 1, 2, 1), 0.1))
+
+
+def test_full_key_path_uses_one_matmul_per_query_chunk():
+    q, k = torch.randn(1, 2, 7, 4), torch.randn(1, 2, 11, 4)
+    with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU]) as profile:
+        compute_attention(q, k, query_chunk=3, key_chunk=2)
+    counts = {event.key: event.count for event in profile.key_averages()}
+    assert counts["aten::matmul"] == 3
+
+
+def test_invalid_values_are_rejected():
+    q, k = torch.ones(1, 1, 2, 4), torch.ones(1, 1, 3, 4)
+    q[0, 0, 0, 0] = float("nan")
+    with pytest.raises(ValueError, match="NaN/Inf"):
+        compute_attention(q, k)
 
