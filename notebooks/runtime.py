@@ -1,6 +1,7 @@
 """Colab 서버와 터널의 수명만 관리한다. attention 모듈에 의존하지 않는다."""
 
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -39,16 +40,13 @@ def wait_for_server(process, base_url, log_path, required_nodes, timeout=240):
 def start_server(comfy_root, python, port=8188, required_nodes=(), timeout=240):
     root = Path(comfy_root)
     base = f"http://127.0.0.1:{port}"
-    try:
-        read_json(base + "/system_stats")
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
-        pass
-    else:
-        raise RuntimeError("해당 포트에 ComfyUI가 이미 실행 중입니다. 먼저 종료하세요.")
     log_path = root / "anima_heatmap_server.log"
+    executable = Path(python)
+    env = {**os.environ, "VIRTUAL_ENV": str(executable.parent.parent),
+           "PYTHONUNBUFFERED": "1", "PATH": str(executable.parent) + os.pathsep + os.environ.get("PATH", "")}
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen([str(python), "main.py", "--listen", "127.0.0.1", "--port", str(port)],
-                                   cwd=root, stdout=log, stderr=subprocess.STDOUT)
+                                   cwd=root, env=env, stdout=log, stderr=subprocess.STDOUT)
     try:
         wait_for_server(process, base, log_path, required_nodes, timeout)
     except BaseException:
@@ -62,7 +60,8 @@ def start_tunnel(cloudflared, base_url, log_path, server, timeout=120):
         raise RuntimeError("ComfyUI가 실행 중이 아닙니다.")
     read_json(base_url + "/system_stats")
     with Path(log_path).open("w", encoding="utf-8") as log:
-        process = subprocess.Popen([str(cloudflared), "tunnel", "--url", base_url, "--no-autoupdate"],
+        process = subprocess.Popen([str(cloudflared), "tunnel", "--url", base_url,
+                                    "--protocol", "http2", "--no-autoupdate"],
                                    stdout=log, stderr=subprocess.STDOUT)
     deadline = time.monotonic() + timeout
     try:
@@ -72,18 +71,27 @@ def start_tunnel(cloudflared, base_url, log_path, server, timeout=120):
             content = tail(log_path)
             match = re.search(r"https://[a-z0-9-]+\.trycloudflare\.com", content)
             if match and "Registered tunnel connection" in content:
-                url = match.group(0)
-                try:
-                    read_json(url + "/system_stats", timeout=5)
-                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
-                    time.sleep(2)
-                    continue
-                return process, url
+                return process, match.group(0)
             time.sleep(1)
         raise TimeoutError(f"터널 연결 준비 시간이 초과되었습니다.\n{tail(log_path)}")
     except BaseException:
         stop_process(process)
         raise
+
+
+def follow_logs(server, tunnel, server_log, tunnel_log):
+    """셀을 실행 상태로 유지하면서 새 서버 로그를 출력한다."""
+    with Path(server_log).open(encoding="utf-8", errors="replace") as log:
+        while True:
+            output = log.read()
+            if output:
+                print(output, end="", flush=True)
+            if server.poll() is not None:
+                print(log.read(), end="", flush=True)
+                return
+            if tunnel.poll() is not None:
+                raise RuntimeError(f"터널이 종료되었습니다.\n{tail(tunnel_log)}")
+            time.sleep(0.2)
 
 
 def stop_process(process):
