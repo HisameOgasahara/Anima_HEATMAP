@@ -9,19 +9,19 @@ Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 
 T2I 생성에 사용한 프롬프트 일부:
 
 ```text
-masterpiece, best quality, ..., 1girl, aoi erika, green eyes, heaven burns red,
-..., brown vest, red miniskirt, ..., holding sketchbook, from above, ..., sunset, ...
+masterpiece, best quality, ..., 1girl, ..., tsuyuri kanao, kimetsu no yaiba,
+demon slayer uniform, ..., holding sketchbook, from above, ..., sunset, ...
 ```
 
-![원본 생성 이미지](example/generated.png)
+![원본 생성 이미지](example/kanao/generated.png)
 
 | 키워드 | 히트맵 | 오버레이 |
 | --- | --- | --- |
-| `sketchbook` | ![sketchbook 히트맵](example/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/overlay_sketchbook.png) |
-| `1girl` | ![1girl 히트맵](example/heatmap_1girl.png) | ![1girl 오버레이](example/overlay_1girl.png) |
-| [aoi erika](https://heaven-burns-red.com/character/31b/aoi-erika/) (캐릭터 이름) | ![aoi erika 히트맵](example/heatmap_aoi_erika.png) | ![aoi erika 오버레이](example/overlay_aoi_erika.png) |
+| `sketchbook` | ![sketchbook 히트맵](example/kanao/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/kanao/overlay_sketchbook.png) |
+| `1girl` | ![1girl 히트맵](example/kanao/heatmap_1girl.png) | ![1girl 오버레이](example/kanao/overlay_1girl.png) |
+| [tsuyuri kanao](https://kimetsu.com/anime/risshihen/character/?chara=kanawo) (캐릭터 이름) | ![tsuyuri kanao 히트맵](example/kanao/heatmap_tsuyuri_kanao.png) | ![tsuyuri kanao 오버레이](example/kanao/overlay_tsuyuri_kanao.png) |
 
-[워크플로 포함 PNG 다운로드](example/generated.png?raw=true) → ComfyUI 캔버스에 드래그.
+[워크플로 포함 PNG 다운로드](example/kanao/generated.png?raw=true) → ComfyUI 캔버스에 드래그.
 
 ## 환경·모델
 

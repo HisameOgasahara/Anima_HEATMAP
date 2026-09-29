@@ -9,19 +9,19 @@ A Python module and ComfyUI custom nodes for capturing and visualizing Anima ima
 Excerpt from the prompt used for T2I generation:
 
 ```text
-masterpiece, best quality, ..., 1girl, aoi erika, green eyes, heaven burns red,
-..., brown vest, red miniskirt, ..., holding sketchbook, from above, ..., sunset, ...
+masterpiece, best quality, ..., 1girl, ..., tsuyuri kanao, kimetsu no yaiba,
+demon slayer uniform, ..., holding sketchbook, from above, ..., sunset, ...
 ```
 
-![Generated image](example/generated.png)
+![Generated image](example/kanao/generated.png)
 
 | Keyword | Heatmap | Overlay |
 | --- | --- | --- |
-| `sketchbook` | ![sketchbook Heatmap](example/heatmap_sketchbook.png) | ![sketchbook Overlay](example/overlay_sketchbook.png) |
-| `1girl` | ![1girl Heatmap](example/heatmap_1girl.png) | ![1girl Overlay](example/overlay_1girl.png) |
-| [aoi erika](https://heaven-burns-red.com/character/31b/aoi-erika/) (character name) | ![aoi erika Heatmap](example/heatmap_aoi_erika.png) | ![aoi erika Overlay](example/overlay_aoi_erika.png) |
+| `sketchbook` | ![sketchbook Heatmap](example/kanao/heatmap_sketchbook.png) | ![sketchbook Overlay](example/kanao/overlay_sketchbook.png) |
+| `1girl` | ![1girl Heatmap](example/kanao/heatmap_1girl.png) | ![1girl Overlay](example/kanao/overlay_1girl.png) |
+| [tsuyuri kanao](https://kimetsu.com/anime/risshihen/character/?chara=kanawo) (character name) | ![tsuyuri kanao Heatmap](example/kanao/heatmap_tsuyuri_kanao.png) | ![tsuyuri kanao Overlay](example/kanao/overlay_tsuyuri_kanao.png) |
 
-[Download the workflow PNG](example/generated.png?raw=true) → drag it onto the ComfyUI canvas.
+[Download the workflow PNG](example/kanao/generated.png?raw=true) → drag it onto the ComfyUI canvas.
 
 ## Environment & Models
 
