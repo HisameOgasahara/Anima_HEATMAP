@@ -53,6 +53,7 @@ ComfyUI 재시작 → 예제 PNG 드래그 → View의 `phrase` 입력 → 실�
 | --- | --- |
 | `anima_heatmap/` | Q/K → attention 확률 → 집계 → 히트맵·오버레이 |
 | `comfyui_anima_heatmap/` | 모델 연결·키워드 선택·ComfyUI 노드 |
+| [`comfyui_anima_profiler/`](comfyui_anima_profiler/README.md) | 샘플러 내부 계산·전송·저장 시간 측정 |
 | `notebooks/` | Colab 설치·모델 다운로드·서버·터널 실행 |
 | `example/` | 워크플로 포함 PNG |
 | `tests/` | 테스트 |

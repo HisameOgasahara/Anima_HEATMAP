@@ -3,8 +3,10 @@
 import math
 
 import torch
+from .profiling import record_count, profile_attention, transfer_to_cpu
 
 
+@profile_attention
 def compute_attention(query, key, *, query_indices=None, key_indices=None,
                       heads="mean", query_chunk=128, key_chunk=256,
                       mask=None, scale=None):
@@ -54,7 +56,7 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                 probabilities = probabilities[:, :, :, kids]
             if heads == "mean":
                 probabilities = probabilities.mean(dim=1, keepdim=True)
-            return probabilities.cpu()
+            return transfer_to_cpu(probabilities)
 
         split_keys = False
         for start in range(0, len(qids), query_chunk):
@@ -64,6 +66,7 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                 try:
                     values = compute_full_keys(q, positions)
                 except torch.OutOfMemoryError:
+                    record_count("oom_fallback")
                     # Retry with bounded key chunks for the rest of this record.
                     split_keys = True
                 else:
@@ -80,7 +83,7 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                 probabilities = torch.where(torch.isneginf(denominator[..., None]), 0, probabilities)
                 if heads == "mean":
                     probabilities = probabilities.mean(dim=1, keepdim=True)
-                output[:, :, start:start + len(positions), offset:offset + len(selected)] = probabilities.cpu()
+                output[:, :, start:start + len(positions), offset:offset + len(selected)] = transfer_to_cpu(probabilities)
     if not torch.isfinite(output).all():
         raise ValueError("attention에 NaN/Inf가 있습니다. Q/K와 mask를 확인하세요.")
     return output
