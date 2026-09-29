@@ -6,7 +6,7 @@ A Python module and ComfyUI custom nodes for capturing and visualizing Anima ima
 
 ## Example
 
-Prompt excerpt:
+Excerpt from the prompt used for T2I generation:
 
 ```text
 masterpiece, best quality, ..., 1girl, aoi erika, green eyes, heaven burns red,
@@ -19,7 +19,7 @@ masterpiece, best quality, ..., 1girl, aoi erika, green eyes, heaven burns red,
 | --- | --- | --- |
 | `sketchbook` | ![sketchbook Heatmap](example/heatmap_sketchbook.png) | ![sketchbook Overlay](example/overlay_sketchbook.png) |
 | `1girl` | ![1girl Heatmap](example/heatmap_1girl.png) | ![1girl Overlay](example/overlay_1girl.png) |
-| `aoi erika` | ![aoi erika Heatmap](example/heatmap_aoi_erika.png) | ![aoi erika Overlay](example/overlay_aoi_erika.png) |
+| [aoi erika](https://heaven-burns-red.com/character/31b/aoi-erika/) (character name) | ![aoi erika Heatmap](example/heatmap_aoi_erika.png) | ![aoi erika Overlay](example/overlay_aoi_erika.png) |
 
 [Download the workflow PNG](example/generated.png?raw=true) → drag it onto the ComfyUI canvas.
 
