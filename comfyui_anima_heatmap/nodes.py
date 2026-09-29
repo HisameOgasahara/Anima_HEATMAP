@@ -13,6 +13,7 @@ import latent_preview
 from anima_heatmap import CaptureConfig, CaptureSession, load_maps, render_map, save_views, select_indices
 from .bridge import attach_capture, clean_conditioning, read_token_map
 from .phrases import split_phrases, resolve_phrase, describe_selection
+from .labels import label_images
 
 
 class AnimaHeatmapTextEncode:
@@ -172,7 +173,7 @@ class AnimaHeatmapView:
             selections = [("", None)]
         elif token_indices.strip():
             ids = select_indices(token_indices, len(token_map["ids"]))
-            selections = [("manual tokens", ids)]
+            selections = [(f"tokens {ids}", ids)]
             info.append(describe_selection(token_map, phrase, ids, "수동 위치 선택"))
         else:
             for query in split_phrases(phrase):
@@ -198,8 +199,9 @@ class AnimaHeatmapView:
             saved = save_views(items, Path(session) / "views", image=base, alpha=alpha,
                                colormap=colormap, normalization=normalization)
             info.append(f"저장: {saved}")
-        return (torch.from_numpy(np.stack([r["overlay"] for r in rendered])),
-                torch.from_numpy(np.stack([r["heatmap"] for r in rendered])), "\n".join(info))
+        labels = [item["label"] for item in items]
+        return (torch.from_numpy(label_images([r["overlay"] for r in rendered], labels)),
+                torch.from_numpy(label_images([r["heatmap"] for r in rendered], labels)), "\n".join(info))
 
 
 NODE_CLASS_MAPPINGS = {

@@ -14,7 +14,16 @@ PNG에 워크플로가 포함되어 있다. [다운로드·불러오기](example
 
 ## 환경·모델
 
-Python 3.10+ · PyTorch 2.5+ · Anima 지원 ComfyUI · CUDA GPU
+실행 확인 환경:
+
+| 항목 | 버전·환경 |
+| --- | --- |
+| OS | Google Colab · Linux |
+| Python | 3.13.15 |
+| PyTorch | 2.14.0+cu130 |
+| ComfyUI | 0.37.0 |
+| Frontend | 1.53.6 |
+| GPU | NVIDIA Tesla T4 · VRAM 14.56 GB |
 
 | 구성 | 모델 |
 | --- | --- |
