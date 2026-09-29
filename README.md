@@ -10,7 +10,7 @@ Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 
 | --- | --- | --- |
 | `sketchbook` | ![sketchbook 히트맵](example/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/overlay_sketchbook.png) |
 | `1girl` | ![1girl 히트맵](example/heatmap_1girl.png) | ![1girl 오버레이](example/overlay_1girl.png) |
-| `aoi erika` | ![aoi erika 히트맵](example/heatmap.png) | ![aoi erika 오버레이](example/overlay.png) |
+| `aoi erika` | ![aoi erika 히트맵](example/heatmap_aoi_erika.png) | ![aoi erika 오버레이](example/overlay_aoi_erika.png) |
 
 PNG에 워크플로가 포함되어 있다. [다운로드·불러오기](example/README.md)
 
