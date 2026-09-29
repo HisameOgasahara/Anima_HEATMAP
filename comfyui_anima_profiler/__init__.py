@@ -54,7 +54,7 @@ class AnimaHeatmapProfileSampler:
                 diagnostic_errors.append(f"PyTorch stop: {exc!r}")
             profile.resources.append(snapshot())
             data = profile.result()
-            data["schema_version"] = 2
+            data["schema_version"] = 3
             data["device_before"] = device_before
             data["device_after"] = device_snapshot(kwargs["model"].load_device)
             data.update(profile.evidence())

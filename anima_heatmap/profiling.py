@@ -34,7 +34,7 @@ class CaptureProfile:
     @contextmanager
     def measure(self, name, device=None):
         device = torch.device(device) if device is not None else None
-        synchronize = device is not None and device.type == "cuda"
+        synchronize = device is not None and device.type == "cuda" and name != "cpu_transfer"
         if synchronize:
             torch.cuda.synchronize(device)
         started = perf_counter()
@@ -51,11 +51,13 @@ class CaptureProfile:
         seconds = dict(self.seconds)
         seconds["attention_compute"] = max(0.0, seconds.get("attention_total", 0.0)
                                             - seconds.get("cpu_transfer", 0.0))
+        seconds["storage_blocking"] = sum(seconds.get(k, 0.0) for k in
+                                          ("write_queue_wait", "write_drain", "write_oversize_sync"))
         seconds["sampling_other"] = max(0.0, seconds.get("sampling_total", 0.0)
                                          - seconds.get("attention_total", 0.0)
-                                         - seconds.get("file_save", 0.0))
+                                         - seconds["storage_blocking"])
         return {"seconds": seconds, "counts": dict(self.counts),
-                "timing": "synchronized wall clock; attention_total includes cpu_transfer; profiling adds overhead"}
+                "timing": "attention boundaries synchronize; cpu_transfer includes preceding GPU work waited by blocking cpu(); file_save overlaps sampling and is not additive; storage_blocking is producer queue/drain wait"}
 
     def save_array(self, path, array, metadata):
         monitoring_start = perf_counter()

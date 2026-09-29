@@ -3,6 +3,7 @@
 import math
 
 import torch
+import numpy as np
 from .profiling import record_count, profile_attention, transfer_to_cpu
 
 
@@ -34,7 +35,7 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                          len(qids), len(kids), dtype=torch.float32, device="cpu")
     with torch.no_grad():
         selected_query = query.detach() if hids == list(range(query.shape[1])) else query.detach()[:, hids]
-        k = key.detach()[:, hids].float()
+        k = (key.detach() if hids == list(range(key.shape[1])) else key.detach()[:, hids]).float()
         expanded_mask = None
         if mask is not None:
             expanded_mask = torch.broadcast_to(mask.to(query.device),
@@ -84,7 +85,7 @@ def compute_attention(query, key, *, query_indices=None, key_indices=None,
                 if heads == "mean":
                     probabilities = probabilities.mean(dim=1, keepdim=True)
                 output[:, :, start:start + len(positions), offset:offset + len(selected)] = transfer_to_cpu(probabilities)
-    if not torch.isfinite(output).all():
+    if not np.isfinite(output.numpy()).all():
         raise ValueError("attention에 NaN/Inf가 있습니다. Q/K와 mask를 확인하세요.")
     return output
 

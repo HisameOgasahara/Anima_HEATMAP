@@ -11,7 +11,7 @@ import uuid
 import numpy as np
 
 from .compute import compute_attention
-from .profiling import save_array
+from .writer import ArrayWriter
 
 
 def select_indices(spec, count, *, grid=None):
@@ -55,13 +55,14 @@ class CaptureConfig:
     query_chunk: int = 128
     key_chunk: int = 256
     max_capture_bytes: int = 8 * 1024**3
+    max_pending_bytes: int = 256 * 1024**2
 
     def __post_init__(self):
         if not self.relations or set(self.relations) - {"image->text", "image->image"}:
             raise ValueError("Anima 본체는 image->text / image->image를 지원합니다.")
         if not self.branches or set(self.branches) - {"positive", "negative"}:
             raise ValueError("branch는 positive / negative입니다.")
-        if min(self.query_chunk, self.key_chunk, self.max_capture_bytes) <= 0:
+        if min(self.query_chunk, self.key_chunk, self.max_capture_bytes, self.max_pending_bytes) <= 0:
             raise ValueError("chunk 크기와 수집 용량은 양수여야 합니다.")
 
 
@@ -79,6 +80,7 @@ class CaptureSession:
         self.manifest = dict(schema_version=1, status="running", config=asdict(self.config),
                              token_maps=self.token_maps, metadata=metadata or {}, records=self.records)
         self._write_manifest()
+        self.writer = ArrayWriter(self.config.max_pending_bytes)
 
     def _write_manifest(self):
         temporary = self.path / "manifest.partial.json"
@@ -116,7 +118,7 @@ class CaptureSession:
             values = compute_attention(query, key, query_indices=qids, key_indices=kids,
                 heads=heads, query_chunk=self.config.query_chunk, key_chunk=self.config.key_chunk, mask=mask)
             filename = f"raw/{len(self.records):06d}.npy"
-            save_array(self.path / filename, values.numpy(), step=int(step), call=int(call),
+            self.writer.submit(self.path / filename, values.numpy(), step=int(step), call=int(call),
                        layer=int(layer), relation=relation, branch=branch)
             self.capture_bytes += size
             self.records.append(dict(file=filename, relation=relation, branch=branch,
@@ -127,9 +129,17 @@ class CaptureSession:
 
     def finish(self, error=None):
         with self.lock:
-            self.manifest.update(status="failed" if error else "complete", error=str(error) if error else None,
-                                 capture_bytes=self.capture_bytes)
+            write_error = None
+            try:
+                self.writer.finish()
+            except Exception as exc:
+                write_error = exc
+            failure = error or write_error
+            self.manifest.update(status="failed" if failure else "complete", error=str(failure) if failure else None,
+                                 capture_bytes=self.capture_bytes, peak_pending_bytes=self.writer.peak_pending)
             self._write_manifest()
+            if write_error is not None and error is None:
+                raise write_error
 
     def __enter__(self):
         return self

@@ -129,15 +129,18 @@ def summarize_resources(snapshots):
 
 def build_report(data):
     seconds = data["seconds"]
-    labels = {"attention_compute": "attention 계산·준비", "cpu_transfer": "CPU 전송",
-              "file_save": "NPY 저장", "sampling_other": "나머지 생성·실행"}
+    labels = {"attention_compute": "attention 준비·계산(CPU 전송 호출 제외)", "cpu_transfer": "CPU 전송 호출·선행 GPU 대기",
+              "storage_blocking": "저장으로 생성이 대기한 시간", "sampling_other": "나머지 생성·실행"}
     ranked = sorted(labels, key=lambda k: seconds.get(k, 0), reverse=True)
     total = seconds.get("sampling_total", 0)
-    lines = [f"측정된 최대 시간 구간: {labels[ranked[0]]}", f"샘플러 전체: {total:.3f}초"]
+    overhead = max((k for k in labels if k != "sampling_other"), key=lambda k: seconds.get(k, 0))
+    lines = [f"히트맵 추가 작업의 최대 시간 구간: {labels[overhead]}", f"샘플러 전체: {total:.3f}초"]
     for key in ranked:
         value = seconds.get(key, 0)
         lines.append(f"{labels[key]}: {value:.3f}초 ({value / total * 100 if total else 0:.1f}%)")
     storage = data["storage_summary"]
+    lines.append(f"백그라운드 저장 작업: {seconds.get('file_save', 0):.3f}초 (생성과 중첩; 전체에 더하지 않음)")
+    lines.append("생성 대기 세부: " + " / ".join(f"{k}={seconds.get(k, 0):.3f}초" for k in ("write_queue_wait", "write_drain", "write_oversize_sync")))
     lines.append(f"저장량: {storage['total_bytes'] / 2**30:.3f} GiB / {len(data['files'])}파일 / {storage['effective_mib_per_second']:.2f} MiB/s")
     phases = storage["phase_seconds"]
     lines.append("저장 세부: " + " / ".join(f"{k}={v:.3f}초" for k, v in phases.items()))
@@ -169,11 +172,11 @@ def build_report(data):
         top = [r for r in trace.get(kind, []) if r[key] > 0][:5]
         lines.append(kind + ": " + "; ".join(f"{r['name']}={r[key]:.2f}ms" for r in top))
     lines.append(f"CPU 전송 {data['counts'].get('cpu_transfer', 0)}회 / OOM 분할 전환 {data['counts'].get('oom_fallback', 0)}회")
-    actions = {"file_save": "우선 대상: 생성 중 NPY 쓰기. 저장 단계·파일당 분포·RAM/파일 비교값을 함께 확인하세요.",
+    actions = {"storage_blocking": "우선 대상: 저장 대기. queue wait와 종료 drain, 저장 처리량을 비교하세요.",
                "attention_compute": "우선 대상: attention 계산. torch_operators.txt와 trace의 anima::attention_total 내부 연산을 확인하세요.",
                "cpu_transfer": "우선 대상: GPU→CPU 복사. trace의 anima::cpu_transfer와 복사 커널·동기화 대기를 확인하세요.",
                "sampling_other": "우선 대상: 나머지 모델 생성·실행. trace의 모델 연산과 메모리 복사를 확인하세요."}
-    lines.append(actions[ranked[0]])
+    lines.append(actions[overhead])
     lines.append("측정에는 동기화·trace 비용이 포함됩니다. trace의 연산 통계는 표시된 스텝 범위입니다.")
     for error in data.get("diagnostic_errors", []):
         lines.append("진단 수집 실패: " + error)
