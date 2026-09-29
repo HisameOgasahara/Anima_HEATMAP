@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import torch
 
-from anima_heatmap import CaptureSession
+from anima_heatmap import CaptureConfig, CaptureSession
 from anima_heatmap import writer
 from anima_heatmap.profiling import CaptureProfile, measure
 
@@ -49,7 +49,7 @@ def test_completion_waits_for_worker(tmp_path, monkeypatch):
         assert release.wait(5)
         original(*args, **kwargs)
     monkeypatch.setattr(writer, "save_array", blocked)
-    session = CaptureSession(tmp_path)
+    session = CaptureSession(tmp_path, CaptureConfig(save_raw=True))
     session.capture(torch.zeros(1, 1, 2, 4), torch.zeros(1, 1, 3, 4),
                     relation="image->text", branch="positive", step=0, call=0,
                     layer=0, grid=(1, 1, 2), total_steps=1, total_layers=1)
@@ -74,7 +74,7 @@ def test_background_error_marks_session_failed(tmp_path, monkeypatch):
         raise OSError("disk full")
     monkeypatch.setattr(writer, "save_array", fail)
     with pytest.raises(RuntimeError, match="파일 저장") as raised:
-        with CaptureSession(tmp_path) as session:
+        with CaptureSession(tmp_path, CaptureConfig(save_raw=True)) as session:
             session.capture(torch.zeros(1, 1, 2, 4), torch.zeros(1, 1, 3, 4),
                             relation="image->text", branch="positive", step=0, call=0,
                             layer=0, grid=(1, 1, 2), total_steps=1, total_layers=1)

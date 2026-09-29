@@ -47,6 +47,8 @@ xcopy comfyui_anima_heatmap "<ComfyUI 경로>\custom_nodes\comfyui_anima_heatmap
 ComfyUI 재시작 → 예제 PNG 드래그 → View의 `phrase` 입력 → 실행.
 여러 키워드는 쉼표나 줄바꿈으로 구분한다.
 
+기본은 RAM 보관이며 Sampler의 `session`을 View에 연결한다. 원본 파일을 남겨 재실행 후에도 분석하려면 Settings의 `save_raw`를 켠다. `max_capture_gib`는 수집량 한도다. 전체 단계 수집에는 그만큼의 여유 RAM이 필요하다.
+
 ## 구조
 
 | 경로 | 역할 |

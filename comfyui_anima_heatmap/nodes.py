@@ -59,19 +59,19 @@ class AnimaHeatmapSettings:
             "query_chunk": ("INT", {"default": 128, "min": 1, "max": 4096}),
             "key_chunk": ("INT", {"default": 256, "min": 1, "max": 4096}),
             "max_capture_gib": ("FLOAT", {"default": 8.0, "min": 0.01, "max": 1024.0}),
-        }}
+        }, "optional": {"save_raw": ("BOOLEAN", {"default": False})}}
 
     RETURN_TYPES = ("ANIMA_HEATMAP_SETTINGS",)
     FUNCTION = "configure"
     CATEGORY = "Anima Heatmap"
 
     def configure(self, relations, steps, layers, heads, branches, image_queries, text_keys,
-                  query_chunk, key_chunk, max_capture_gib):
+                  query_chunk, key_chunk, max_capture_gib, save_raw=False):
         return (CaptureConfig(relations=("image->text", "image->image") if relations == "both" else (relations,),
             steps=steps, layers=layers, heads=heads,
             branches=("positive", "negative") if branches == "both" else (branches,),
             image_queries=image_queries, text_keys=text_keys, query_chunk=query_chunk, key_chunk=key_chunk,
-            max_capture_bytes=int(max_capture_gib * 1024**3)),)
+            max_capture_bytes=int(max_capture_gib * 1024**3), save_raw=save_raw),)
 
 
 class AnimaHeatmapSampler:
@@ -118,7 +118,7 @@ class AnimaHeatmapSampler:
         output.pop("downscale_ratio_spacial", None)
         output.pop("downscale_ratio_temporal", None)
         output["samples"] = samples
-        return (output, str(session.path), str(session.path))
+        return (output, session, str(session.path))
 
 
 class AnimaHeatmapLoadSession:
@@ -135,6 +135,8 @@ class AnimaHeatmapLoadSession:
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         if manifest["status"] != "complete":
             raise ValueError("완료된 세션을 선택하세요.")
+        if manifest.get("storage") == "memory":
+            raise ValueError("메모리 세션은 Sampler의 session 출력을 연결하세요. 원본 보관에는 save_raw=True가 필요합니다.")
         return (str(root), json.dumps(manifest, ensure_ascii=False, indent=2))
 
 
@@ -168,7 +170,8 @@ class AnimaHeatmapView:
     def view(self, session, images, relation, branch, batch_index, phrase, token_indices,
              occurrence, query_index, steps, layers, heads, calls, view, aggregation,
              normalization, colormap, alpha, save_files):
-        manifest = json.loads((Path(session) / "manifest.json").read_text(encoding="utf-8"))
+        root = session.path if isinstance(session, CaptureSession) else Path(session)
+        manifest = session.manifest if isinstance(session, CaptureSession) else json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         token_map = manifest["token_maps"][branch]
         selections, info = [], []
         if relation == "image->image":
@@ -198,7 +201,7 @@ class AnimaHeatmapView:
                     normalization=normalization, value_range=value_range) for item in items]
         info.extend(f"출력 {i}: {item['label']}" for i, item in enumerate(items))
         if save_files:
-            saved = save_views(items, Path(session) / "views", image=base, alpha=alpha,
+            saved = save_views(items, root / "views", image=base, alpha=alpha,
                                colormap=colormap, normalization=normalization)
             info.append(f"저장: {saved}")
         labels = [item["label"] for item in items]

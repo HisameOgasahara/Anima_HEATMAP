@@ -11,7 +11,7 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 
-from .capture import select_indices
+from .capture import CaptureSession, select_indices
 
 
 def find_token_spans(token_map, phrase, occurrence="all"):
@@ -64,10 +64,13 @@ def load_maps(session, *, relation="image->text", branch="positive", batch=0,
     mean은 선택 기록 평균, daam은 head 합→call 내 layer 평균→call 합이다.
     저장된 head 평균에서 개별 head를 복원할 수는 없다.
     """
-    root = Path(session).resolve()
-    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    memory = isinstance(session, CaptureSession) and not session.config.save_raw
+    root = session.path if isinstance(session, CaptureSession) else Path(session).resolve()
+    manifest = session.manifest if isinstance(session, CaptureSession) else json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     if manifest["status"] != "complete":
         raise ValueError(f"완료되지 않은 세션입니다: {manifest['status']} / {manifest.get('error')}")
+    if manifest.get("storage") == "memory" and not memory:
+        raise ValueError("메모리 세션은 Sampler의 session 출력을 직접 연결하세요. 폴더 재분석에는 save_raw=True가 필요합니다.")
     records = [r for r in manifest["records"] if r["relation"] == relation and r["branch"] == branch]
     if not records:
         raise ValueError("선택한 관계/분기의 기록이 없습니다. CFG=1이면 부정 분기가 실행되지 않을 수 있습니다.")
@@ -87,7 +90,7 @@ def load_maps(session, *, relation="image->text", branch="positive", batch=0,
         path = (root / r["file"]).resolve()
         if not path.is_relative_to(root):
             raise ValueError("세션 밖의 원본 파일은 읽을 수 없습니다.")
-        data = np.load(path, mmap_mode="r", allow_pickle=False)
+        data = session.arrays[r["file"]] if memory else np.load(path, mmap_mode="r", allow_pickle=False)
         if not 0 <= batch < data.shape[0]:
             raise ValueError("batch 번호가 기록 범위를 벗어났습니다.")
         hids = r["head_ids"]

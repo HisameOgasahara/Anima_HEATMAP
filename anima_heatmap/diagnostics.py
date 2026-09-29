@@ -135,6 +135,8 @@ def build_report(data):
     total = seconds.get("sampling_total", 0)
     overhead = max((k for k in labels if k != "sampling_other"), key=lambda k: seconds.get(k, 0))
     lines = [f"히트맵 추가 작업의 최대 시간 구간: {labels[overhead]}", f"샘플러 전체: {total:.3f}초"]
+    if data.get("capture_storage") == "memory":
+        lines.append(f"원본 보관: RAM {data.get('retained_bytes', 0) / 2**30:.3f} GiB / NPY 저장 꺼짐")
     for key in ranked:
         value = seconds.get(key, 0)
         lines.append(f"{labels[key]}: {value:.3f}초 ({value / total * 100 if total else 0:.1f}%)")

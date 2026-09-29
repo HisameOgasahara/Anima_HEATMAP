@@ -5,6 +5,7 @@ import copy
 
 import folder_paths
 from anima_heatmap.profiling import CaptureProfile
+from anima_heatmap import CaptureSession
 from anima_heatmap.diagnostics import snapshot, storage_info, benchmark_storage, summarize_resources, build_report
 from anima_heatmap.torch_trace import TorchTrace, device_snapshot
 
@@ -74,7 +75,13 @@ class AnimaHeatmapProfileSampler:
                 data["diagnostic_errors"].append(f"PyTorch trace: {exc!r}")
             try:
                 sample_path = profile.files[0]["file"] if profile.files else None
-                data["storage_benchmark"] = benchmark_storage(root, storage_probe_mib * 2**20, sample_path=sample_path)
+                if result is not None and isinstance(result[1], CaptureSession) and not result[1].config.save_raw:
+                    data["storage_benchmark"] = {"skipped": "memory session: no raw disk storage"}
+                    data["capture_storage"] = "memory"
+                    data["retained_bytes"] = result[1].capture_bytes
+                else:
+                    data["storage_benchmark"] = benchmark_storage(root, storage_probe_mib * 2**20, sample_path=sample_path)
+                    data["capture_storage"] = "disk"
             except Exception as exc:
                 data["diagnostic_errors"].append(f"Storage probe: {exc!r}")
             report = build_report(data) + f"\n{path}"

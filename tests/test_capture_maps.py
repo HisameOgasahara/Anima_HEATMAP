@@ -21,7 +21,7 @@ def record(session, *, branch="positive", call=0, step=0, layer=0, relation="ima
 def test_fresh_sessions_and_branch_isolation(tmp_path):
     paths = []
     for _ in range(2):
-        with CaptureSession(tmp_path, token_maps={"positive": TOKENS}) as session:
+        with CaptureSession(tmp_path, CaptureConfig(save_raw=True), token_maps={"positive": TOKENS}) as session:
             record(session)
             record(session, branch="negative", call=1)
         paths.append(session.path)
@@ -33,7 +33,7 @@ def test_fresh_sessions_and_branch_isolation(tmp_path):
 
 def test_failure_persists_and_budget_prevents_allocation(tmp_path):
     with pytest.raises(MemoryError):
-        with CaptureSession(tmp_path, CaptureConfig(max_capture_bytes=1)) as session:
+        with CaptureSession(tmp_path, CaptureConfig(save_raw=True, max_capture_bytes=1)) as session:
             record(session)
     manifest = json.loads((session.path / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "failed"
@@ -53,7 +53,7 @@ def test_token_boundaries_and_repetitions():
 
 
 def test_views_and_reanalysis(tmp_path):
-    config = CaptureConfig(relations=("image->text", "image->image"), heads="all")
+    config = CaptureConfig(save_raw=True, relations=("image->text", "image->image"), heads="all")
     with CaptureSession(tmp_path, config, token_maps={"positive": TOKENS}) as session:
         for step in range(2):
             for layer in range(2):
@@ -74,7 +74,7 @@ def test_views_and_reanalysis(tmp_path):
 
 
 def test_daam_head_sum_and_layer_call_aggregation(tmp_path):
-    with CaptureSession(tmp_path, CaptureConfig(heads="all"), token_maps={"positive": TOKENS}) as session:
+    with CaptureSession(tmp_path, CaptureConfig(save_raw=True, heads="all"), token_maps={"positive": TOKENS}) as session:
         record(session, call=0, layer=0)
         record(session, call=0, layer=1)
         record(session, call=1, layer=0)
@@ -87,7 +87,7 @@ def test_daam_head_sum_and_layer_call_aggregation(tmp_path):
 
 
 def test_mean_capture_cannot_select_individual_head(tmp_path):
-    with CaptureSession(tmp_path, token_maps={"positive": TOKENS}) as session:
+    with CaptureSession(tmp_path, CaptureConfig(save_raw=True), token_maps={"positive": TOKENS}) as session:
         record(session)
     with pytest.raises(ValueError, match="head 평균"):
         load_maps(session.path, phrase="cat", heads="0")

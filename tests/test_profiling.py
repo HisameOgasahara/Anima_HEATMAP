@@ -17,7 +17,7 @@ def test_capture_counts_and_output_parity(tmp_path):
     expected = compute_attention(q, k)
     profile = CaptureProfile()
     with profile.activate(), profile.measure("sampling_total", "cpu"):
-        with CaptureSession(tmp_path, CaptureConfig(query_chunk=2)) as session:
+        with CaptureSession(tmp_path, CaptureConfig(query_chunk=2, save_raw=True)) as session:
             session.capture(q, k, relation="image->text", branch="positive", step=0,
                             call=0, layer=0, grid=(1, 2, 2), total_steps=1, total_layers=1)
         actual = compute_attention(q, k)
