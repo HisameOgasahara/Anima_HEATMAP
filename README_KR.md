@@ -20,6 +20,7 @@ demon slayer uniform, ..., holding sketchbook, from above, ..., sunset, ...
 | `sketchbook` | ![sketchbook 히트맵](example/kanao/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/kanao/overlay_sketchbook.png) |
 | `1girl` | ![1girl 히트맵](example/kanao/heatmap_1girl.png) | ![1girl 오버레이](example/kanao/overlay_1girl.png) |
 | [tsuyuri kanao](https://kimetsu.com/anime/risshihen/character/?chara=kanawo) (캐릭터 이름) | ![tsuyuri kanao 히트맵](example/kanao/heatmap_tsuyuri_kanao.png) | ![tsuyuri kanao 오버레이](example/kanao/overlay_tsuyuri_kanao.png) |
+| `demon slayer uniform` | ![demon slayer uniform 히트맵](example/kanao/heatmap_demon_slayer_uniform.png) | ![demon slayer uniform 오버레이](example/kanao/overlay_demon_slayer_uniform.png) |
 
 [워크플로 포함 PNG 다운로드](example/kanao/generated.png?raw=true) → ComfyUI 캔버스에 드래그.
 
