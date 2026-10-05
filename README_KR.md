@@ -1,95 +1,92 @@
-# Anima Heatmap
+# Anima Tag Influence
 
-[English](README.md) | [한국어](README_KR.md)
+[English](README.md) | [한국어](README_KR.md) | [Attention 히트맵](README__HEATMAP_KR.md)
 
-Anima의 이미지→텍스트·이미지→이미지 attention을 수집하고 시각화하는 Python 모듈과 ComfyUI 커스텀 노드.
+프롬프트의 태그가 이미지의 어디에, 생성 과정의 어느 단계에서 영향을 주는지 비교하는 ComfyUI 커스텀 노드.
 
-## Example
+매 단계의 동일한 생성 상태에서 원본 긍정 프롬프트와 태그를 제거한 긍정 프롬프트의 예측을 비교한다. 얼굴·옷·배경 등 예측이 크게 달라지는 위치를 밝게 표시하며, 원본 예측으로 다음 단계에 진행한다.
 
-T2I 생성에 사용한 프롬프트 일부:
-
-```text
-masterpiece, best quality, ..., 1girl, ..., tsuyuri kanao, kimetsu no yaiba,
-demon slayer uniform, ..., holding sketchbook, from above, ..., sunset, ...
+```mermaid
+flowchart LR
+    P[원본 긍정 조건] --> S[Tag Influence Sampler]
+    A[태그 제거 긍정 조건] --> S
+    N[부정 조건] --> S
+    S -->|latent| D[VAE Decode]
+    S -->|influence| V[Tag Influence View]
+    D -->|완성 이미지| V
+    V --> O[단계별 또는 평균 지도]
 ```
 
-![원본 생성 이미지](example/kanao/generated.png)
+화살표는 노드 출력의 연결을 나타낸다.
 
-| 키워드 | 히트맵 | 오버레이 |
-| --- | --- | --- |
-| `sketchbook` | ![sketchbook 히트맵](example/kanao/heatmap_sketchbook.png) | ![sketchbook 오버레이](example/kanao/overlay_sketchbook.png) |
-| `1girl` | ![1girl 히트맵](example/kanao/heatmap_1girl.png) | ![1girl 오버레이](example/kanao/overlay_1girl.png) |
-| [tsuyuri kanao](https://kimetsu.com/anime/risshihen/character/?chara=kanawo) (캐릭터 이름) | ![tsuyuri kanao 히트맵](example/kanao/heatmap_tsuyuri_kanao.png) | ![tsuyuri kanao 오버레이](example/kanao/overlay_tsuyuri_kanao.png) |
-| `demon slayer uniform` | ![demon slayer uniform 히트맵](example/kanao/heatmap_demon_slayer_uniform.png) | ![demon slayer uniform 오버레이](example/kanao/overlay_demon_slayer_uniform.png) |
+## Colab 실행
 
-[워크플로 포함 PNG 다운로드](example/kanao/generated.png?raw=true) → ComfyUI 캔버스에 드래그.
+[Colab에서 열기](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/feature/tag-influence/notebooks/Anima_Heatmap_ComfyUI.ipynb)
 
-## 환경·모델
+1. GPU 런타임을 선택하고 셀을 순서대로 실행한다. `SOURCE_REF` 기본값은 `feature/tag-influence`다.
+2. 다운로드되는 `tag_influence.json`을 보관한다.
+3. 서버 실행 셀의 ComfyUI 링크를 열고 JSON을 캔버스에 드래그한다.
+4. 모델을 선택하고 프롬프트·샘플링 설정을 조정한 뒤 실행한다.
 
-실행 확인 환경:
+접속 링크를 아는 사람은 ComfyUI에 접근할 수 있다. 사용 중에는 서버 실행 셀을 유지하고, 종료할 때 셀의 중지 버튼을 누른다.
 
-| 항목 | 버전·환경 |
-| --- | --- |
-| OS | Google Colab · Linux |
-| Python | 3.13.15 |
-| PyTorch | 2.14.0+cu130 |
-| ComfyUI | 0.37.0 |
-| Frontend | 1.53.6 |
-| GPU | NVIDIA Tesla T4 · VRAM 14.56 GB |
+## 로컬 설치
 
-| 구성 | 모델 |
-| --- | --- |
-| Diffusion | [Anima Base](https://huggingface.co/circlestone-labs/Anima) |
-| Text encoder | Qwen 3 0.6B Base |
-| VAE | Qwen Image VAE |
-
-## 설치
-
-[Colab에서 실행](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/main/notebooks/Anima_Heatmap_ComfyUI.ipynb): GPU 런타임을 선택하고 셀을 순서대로 실행한다.
-
-로컬 설치 (Windows cmd):
+Windows cmd:
 
 ```bat
-git clone https://github.com/HisameOgasahara/Anima_HEATMAP.git
+git clone --branch feature/tag-influence --single-branch https://github.com/HisameOgasahara/Anima_HEATMAP.git
 cd Anima_HEATMAP
 uv pip install --python "<ComfyUI Python 경로>" -e .
 xcopy comfyui_anima_heatmap "<ComfyUI 경로>\custom_nodes\comfyui_anima_heatmap\" /E /I
 ```
 
-ComfyUI 재시작 → 예제 PNG 드래그 → View의 `phrase` 입력 → 실행.
-여러 키워드는 쉼표나 줄바꿈으로 구분한다.
+ComfyUI를 재시작하고 [예제 워크플로](example/tag_influence.json?raw=true)를 캔버스에 드래그한다.
 
-기본은 생성 중 통합이며 Sampler의 `session`을 View에 연결한다. 키워드는 실행 후에도 바꿀 수 있다. Settings와 View의 `aggregation`을 맞춘다. 단계·layer별 원본 분석은 `keep_records=True`, 원본 파일 보관은 `save_raw=True`를 사용한다.
-
-| 집계 모드 | 방식 |
+| 노드 | 모델·설정 |
 | --- | --- |
-| `mean` | 선택한 head와 수집 기록을 평균 |
-| `daam` | head 합 → 모델 호출별 layer 평균 → 호출 전체 합 |
+| `UNETLoader` | `anima-base-v1.0.safetensors` |
+| `CLIPLoader` | `qwen_3_06b_base.safetensors`, 타입 `stable_diffusion` |
+| `VAELoader` | `qwen_image_vae.safetensors` |
 
-## 구조
+모델 파일: [Anima Base](https://huggingface.co/circlestone-labs/Anima).
 
-| 경로 | 역할 |
+## 태그 비교
+
+예제는 `red shirt`를 제거한 영향을 측정한다.
+
+| 입력 | 프롬프트 |
 | --- | --- |
-| `anima_heatmap/` | Q/K → attention 확률 → 집계 → 히트맵·오버레이 |
-| `comfyui_anima_heatmap/` | 모델 연결·키워드 선택·ComfyUI 노드 |
-| [`comfyui_anima_profiler/`](comfyui_anima_profiler/README.md) | 샘플러 내부 계산·전송·저장 시간 측정 |
-| `notebooks/` | Colab 설치·모델 다운로드·서버·터널 실행 |
-| `example/` | 워크플로 포함 PNG |
-| `tests/` | 테스트 |
+| `positive` | `1girl, solo, upper body, looking at viewer, outdoors, daytime, red shirt` |
+| `ablated_positive` | `1girl, solo, upper body, looking at viewer, outdoors, daytime` |
+| `negative` | `low quality, worst quality, blurry` |
 
-## 독립 모듈
+두 긍정 프롬프트를 같은 CLIP으로 인코딩한다. 캐릭터·작가·표정·소품·배경 등 비교할 태그만 바꾸면 된다. 태그 여러 개를 함께 제거하면 그 조합의 영향을 측정한다.
 
-```bat
-uv venv .venv
-uv pip install --python .venv\Scripts\python.exe -e .
-.venv\Scripts\python.exe -m anima_heatmap "<세션 폴더>" --phrase "blue hair" --image "<이미지.png>" --output "<출력 폴더>"
-```
+`Tag Influence Sampler`의 `latent`를 VAE Decode로 보내고, 완성 이미지와 `influence`를 `Tag Influence View`에 연결한다. View의 `overlays` 또는 `heatmaps` 출력을 Preview Image에 연결한다.
 
-세션 저장 위치: `ComfyUI/output/anima_heatmap/`
+## 스텝과 표시 설정
 
-## 참조
+Sampler의 `steps`, `seed`, `cfg`, `sampler_name`, `scheduler`, `denoise`는 KSampler와 같은 입력이다. `steps`를 바꾸면 실제 noise schedule에 맞춰 측정하며, 예제의 30스텝을 원하는 수로 변경할 수 있다.
 
-- [Anima](https://huggingface.co/circlestone-labs/Anima)
-- [ComfyUI Anima](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/anima/model.py)
-- [attention-map-diffusers](https://github.com/wooyeolBaek/attention-map-diffusers)
-- [ComfyUI DAAM](https://github.com/nisaruj/comfyui-daam)
+| View 입력 | 동작 |
+| --- | --- |
+| `view=per_step` | 각 단계 구간의 측정을 평균하여 단계별 지도 출력 |
+| `view=aggregate` | 선택한 단계에 속한 모든 측정의 평균 지도 출력 |
+| `steps=all` / `last` | 전체 단계 / 마지막 단계 선택 |
+| `steps=0,4,8` / `0-9` | 특정 단계 / 연속 범위 선택. 입력은 0부터, 이미지 표시는 1부터 시작 |
+| `scale_max=0` | 전체 측정의 최대값을 공통 색 눈금으로 사용 |
+| `scale_max>0` | 지정한 최대값으로 색 눈금 고정 |
+| `alpha` | 완성 이미지 위에 겹치는 색의 불투명도 |
+
+한 단계에서 모델을 여러 번 계산하는 샘플러는 noise schedule 구간에 따라 호출을 묶는다. 따라서 모델 호출 수와 생성 스텝 수가 다를 수 있다. `details`에는 단계·호출·sigma별 측정값과 출력 순서가 담긴다.
+
+View 설정만 바꾸면 메모리에 남은 측정을 다시 표시한다. 비교 프롬프트를 바꾸면 샘플링부터 다시 실행한다.
+
+## 지도 해석과 자원
+
+지도 값은 같은 생성 상태와 sigma에서 두 CFG 예측의 차이를 sigma로 나눈 뒤, latent 채널 방향의 L2 크기를 구한 값이다. 태그를 제거한 효과에는 달라진 프롬프트 문맥의 영향도 포함된다.
+
+단계별 지도는 최종 완성 이미지 위에 겹친다. 비교용 예측은 다음 단계에 누적되지 않으며, 원본 긍정·부정 조건의 CFG 예측이 생성 경로를 결정한다.
+
+같은 모델로 비교 예측을 추가 계산하고, 차이 지도는 CPU 메모리에 보관한다. 일반적인 CFG 생성에서 태그 하나를 비교하면 이론적인 모델 계산량은 약 두 배이며, 실제 실행 시간과 최대 VRAM은 해상도·샘플러·메모리 배치에 따라 달라진다. 이 기능의 Colab GPU 실행과 최대 VRAM은 아직 측정하지 않았다.

@@ -1,95 +1,92 @@
-# Anima Heatmap
+# Anima Tag Influence
 
-[English](README.md) | [한국어](README_KR.md)
+[English](README.md) | [한국어](README_KR.md) | [Attention heatmaps](README__HEATMAP.md)
 
-A Python module and ComfyUI custom nodes for capturing and visualizing Anima image-to-text and image-to-image attention.
+ComfyUI custom nodes for comparing where a prompt tag affects an image and when its influence appears during generation.
 
-## Example
+At each step, the nodes compare predictions for the original positive prompt and a positive prompt with the selected tag removed, using the same generation state. Locations with larger prediction changes appear brighter. The original prediction advances generation to the next step.
 
-Excerpt from the prompt used for T2I generation:
-
-```text
-masterpiece, best quality, ..., 1girl, ..., tsuyuri kanao, kimetsu no yaiba,
-demon slayer uniform, ..., holding sketchbook, from above, ..., sunset, ...
+```mermaid
+flowchart LR
+    P[Original positive conditioning] --> S[Tag Influence Sampler]
+    A[Positive conditioning with tag removed] --> S
+    N[Negative conditioning] --> S
+    S -->|latent| D[VAE Decode]
+    S -->|influence| V[Tag Influence View]
+    D -->|Final image| V
+    V --> O[Per-step or aggregate maps]
 ```
 
-![Generated image](example/kanao/generated.png)
+Arrows represent connections between node outputs and inputs.
 
-| Keyword | Heatmap | Overlay |
-| --- | --- | --- |
-| `sketchbook` | ![sketchbook Heatmap](example/kanao/heatmap_sketchbook.png) | ![sketchbook Overlay](example/kanao/overlay_sketchbook.png) |
-| `1girl` | ![1girl Heatmap](example/kanao/heatmap_1girl.png) | ![1girl Overlay](example/kanao/overlay_1girl.png) |
-| [tsuyuri kanao](https://kimetsu.com/anime/risshihen/character/?chara=kanawo) (character name) | ![tsuyuri kanao Heatmap](example/kanao/heatmap_tsuyuri_kanao.png) | ![tsuyuri kanao Overlay](example/kanao/overlay_tsuyuri_kanao.png) |
-| `demon slayer uniform` | ![demon slayer uniform Heatmap](example/kanao/heatmap_demon_slayer_uniform.png) | ![demon slayer uniform Overlay](example/kanao/overlay_demon_slayer_uniform.png) |
+## Run in Colab
 
-[Download the workflow PNG](example/kanao/generated.png?raw=true) → drag it onto the ComfyUI canvas.
+[Open in Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/feature/tag-influence/notebooks/Anima_Heatmap_ComfyUI.ipynb)
 
-## Environment & Models
+1. Select a GPU runtime and run the cells in order. `SOURCE_REF` defaults to `feature/tag-influence`.
+2. Keep the downloaded `tag_influence.json`.
+3. Open the ComfyUI link from the server cell and drag the JSON onto the canvas.
+4. Select the models, adjust the prompts and sampling settings, and run.
 
-Tested environment:
+Anyone with the connection URL can access ComfyUI. Keep the server cell running while using it; press the cell's stop button to end the session.
 
-| Component | Version / Environment |
-| --- | --- |
-| OS | Google Colab · Linux |
-| Python | 3.13.15 |
-| PyTorch | 2.14.0+cu130 |
-| ComfyUI | 0.37.0 |
-| Frontend | 1.53.6 |
-| GPU | NVIDIA Tesla T4 · VRAM 14.56 GB |
+## Local installation
 
-| Component | Model |
-| --- | --- |
-| Diffusion | [Anima Base](https://huggingface.co/circlestone-labs/Anima) |
-| Text encoder | Qwen 3 0.6B Base |
-| VAE | Qwen Image VAE |
-
-## Installation
-
-[Run in Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/main/notebooks/Anima_Heatmap_ComfyUI.ipynb): select a GPU runtime and run the cells in order.
-
-Local installation (Windows cmd):
+Windows cmd:
 
 ```bat
-git clone https://github.com/HisameOgasahara/Anima_HEATMAP.git
+git clone --branch feature/tag-influence --single-branch https://github.com/HisameOgasahara/Anima_HEATMAP.git
 cd Anima_HEATMAP
 uv pip install --python "<ComfyUI Python path>" -e .
 xcopy comfyui_anima_heatmap "<ComfyUI path>\custom_nodes\comfyui_anima_heatmap\" /E /I
 ```
 
-Restart ComfyUI → drag in an example PNG → enter `phrase` in View → run.
-Separate multiple keywords with commas or newlines.
+Restart ComfyUI and drag the [example workflow](example/tag_influence.json?raw=true) onto the canvas.
 
-Maps are aggregated during sampling by default. Connect the Sampler’s `session` to View; keywords can be changed afterward. Match `aggregation` in Settings and View. Use `keep_records=True` for per-step/layer records or `save_raw=True` to save raw files.
-
-| Aggregation | Method |
+| Node | Model / setting |
 | --- | --- |
-| `mean` | Average selected heads and captured records |
-| `daam` | Sum heads → average layers within each model call → sum calls |
+| `UNETLoader` | `anima-base-v1.0.safetensors` |
+| `CLIPLoader` | `qwen_3_06b_base.safetensors`, type `stable_diffusion` |
+| `VAELoader` | `qwen_image_vae.safetensors` |
 
-## Project Structure
+Model files: [Anima Base](https://huggingface.co/circlestone-labs/Anima).
 
-| Path | Purpose |
+## Compare a tag
+
+The example measures the effect of removing `red shirt`.
+
+| Input | Prompt |
 | --- | --- |
-| `anima_heatmap/` | Q/K → attention probabilities → aggregation → heatmaps and overlays |
-| `comfyui_anima_heatmap/` | Model integration, keyword selection, and ComfyUI nodes |
-| [`comfyui_anima_profiler/`](comfyui_anima_profiler/README.md) | Sampling compute, transfer, and storage profiling |
-| `notebooks/` | Colab setup, model downloads, server, and tunnel |
-| `example/` | PNGs with embedded workflows |
-| `tests/` | Tests |
+| `positive` | `1girl, solo, upper body, looking at viewer, outdoors, daytime, red shirt` |
+| `ablated_positive` | `1girl, solo, upper body, looking at viewer, outdoors, daytime` |
+| `negative` | `low quality, worst quality, blurry` |
 
-## Standalone Module
+Encode both positive prompts with the same CLIP. Change the tag being compared to a character, artist, expression, object, background, or another prompt tag. Removing several tags together measures their combined effect.
 
-```bat
-uv venv .venv
-uv pip install --python .venv\Scripts\python.exe -e .
-.venv\Scripts\python.exe -m anima_heatmap "<session directory>" --phrase "blue hair" --image "<image.png>" --output "<output directory>"
-```
+Connect the Sampler's `latent` to VAE Decode, then connect the final image and `influence` to `Tag Influence View`. Connect View's `overlays` or `heatmaps` output to Preview Image.
 
-Session directory: `ComfyUI/output/anima_heatmap/`
+## Steps and display settings
 
-## References
+The Sampler accepts the same `steps`, `seed`, `cfg`, `sampler_name`, `scheduler`, and `denoise` inputs as KSampler. Measurements follow the actual noise schedule when `steps` changes. The example's 30 steps can be changed to another count.
 
-- [Anima](https://huggingface.co/circlestone-labs/Anima)
-- [ComfyUI Anima](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/anima/model.py)
-- [attention-map-diffusers](https://github.com/wooyeolBaek/attention-map-diffusers)
-- [ComfyUI DAAM](https://github.com/nisaruj/comfyui-daam)
+| View input | Behavior |
+| --- | --- |
+| `view=per_step` | Average measurements within each step interval and output a map per step |
+| `view=aggregate` | Average all measurements belonging to the selected steps |
+| `steps=all` / `last` | Select all steps / the last step |
+| `steps=0,4,8` / `0-9` | Select particular steps / a range. Inputs start at 0; image labels start at 1 |
+| `scale_max=0` | Use the maximum across all measurements as a shared color scale |
+| `scale_max>0` | Fix the color scale to the specified maximum |
+| `alpha` | Opacity of the colors overlaid on the final image |
+
+For samplers that evaluate the model several times per step, calls are grouped by noise schedule interval. Model-call count can therefore differ from sampling-step count. `details` includes measurements by step, call, and sigma, along with the output order.
+
+Changing only View settings redisplays the measurements held in memory. Changing the comparison prompt runs sampling again.
+
+## Interpretation and resources
+
+Map values are the latent-channel L2 magnitude of the difference between the two CFG predictions, divided by sigma, at the same generation state and sigma. The effect of removing a tag includes changes to the prompt's context.
+
+Per-step maps are overlaid on the final generated image. Comparison predictions do not accumulate into subsequent steps; the original positive and negative conditions determine the CFG prediction that advances generation.
+
+The same model performs the additional comparison calculations, and difference maps are stored in CPU memory. Comparing one tag under ordinary CFG approximately doubles the theoretical model computation. Actual runtime and peak VRAM depend on resolution, sampler, and memory placement. Colab GPU execution and peak VRAM for this feature have not yet been measured.
