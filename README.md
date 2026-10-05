@@ -25,6 +25,10 @@ The rows show the effects of removing the character, artist, sketchbook, and clo
 
 At each step, predictions with and without the selected tags are compared at the same generation state. The original prompt advances generation to the next step, and influence maps are overlaid on the final image.
 
+## Measurement
+
+Map values are the latent-channel L2 magnitude of the difference between the two CFG predictions, divided by sigma, at the same generation state and sigma. The effect of removing a tag includes changes to the prompt's context.
+
 ## Usage
 
 1. Connect the original positive prompt to `positive` and the prompt with the selected tags removed to `ablated_positive`.
