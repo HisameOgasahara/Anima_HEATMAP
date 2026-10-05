@@ -36,7 +36,7 @@ Attention 지도에는 attention끼리, 영향 지도에는 영향끼리 공통 
 Attention의 계산은 다음과 같다.
 
 $$
-A=\operatorname{softmax}\left(\frac{QK^{\mathsf T}}{\sqrt{d}}\right),
+A=\mathrm{softmax}\left(\frac{QK^{\mathsf T}}{\sqrt{d}}\right),
 \qquad O=AV
 $$
 
