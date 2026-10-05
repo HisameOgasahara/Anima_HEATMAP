@@ -27,7 +27,23 @@
 
 ## 측정 원리
 
-지도 값은 같은 생성 상태와 sigma에서 두 CFG 예측의 차이를 sigma로 나눈 뒤, latent 채널 방향의 L2 크기를 구한 값이다. 태그를 제거한 효과에는 달라진 프롬프트 문맥의 영향도 포함된다.
+$$
+\begin{aligned}
+\Delta v_t &= \frac{D_{\mathrm{full}}(x_t,\sigma_t)-D_{\mathrm{removed}}(x_t,\sigma_t)}{\sigma_t} \\
+H_t(h,w) &= \left\|\Delta v_t(:,h,w)\right\|_2
+= \sqrt{\sum_{c=1}^{C}\left(\Delta v_t(c,h,w)\right)^2}
+\end{aligned}
+$$
+
+| 기호 | 의미 |
+| --- | --- |
+| $x_t$, $\sigma_t$ | 단계 $t$의 생성 상태와 노이즈 수준 |
+| $D_{\mathrm{full}}$, $D_{\mathrm{removed}}$ | 원본·태그 제거 프롬프트의 denoised 예측. 같은 부정 조건과 CFG 사용 |
+| $\Delta v_t$ | sigma로 나눈 예측 차이 |
+| $c$, $C$ | latent 채널 번호와 채널 수 |
+| $H_t(h,w)$ | latent 위치 $(h,w)$의 영향 지도 값 |
+
+태그를 제거한 효과에는 달라진 프롬프트 문맥의 영향도 포함된다.
 
 ## 사용
 

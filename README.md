@@ -27,7 +27,23 @@ At each step, predictions with and without the selected tags are compared at the
 
 ## Measurement
 
-Map values are the latent-channel L2 magnitude of the difference between the two CFG predictions, divided by sigma, at the same generation state and sigma. The effect of removing a tag includes changes to the prompt's context.
+$$
+\begin{aligned}
+\Delta v_t &= \frac{D_{\mathrm{full}}(x_t,\sigma_t)-D_{\mathrm{removed}}(x_t,\sigma_t)}{\sigma_t} \\
+H_t(h,w) &= \left\|\Delta v_t(:,h,w)\right\|_2
+= \sqrt{\sum_{c=1}^{C}\left(\Delta v_t(c,h,w)\right)^2}
+\end{aligned}
+$$
+
+| Symbol | Meaning |
+| --- | --- |
+| $x_t$, $\sigma_t$ | Generation state and noise level at step $t$ |
+| $D_{\mathrm{full}}$, $D_{\mathrm{removed}}$ | Denoised predictions for the original and tag-removed prompts, using the same negative conditioning and CFG |
+| $\Delta v_t$ | Prediction difference divided by sigma |
+| $c$, $C$ | Latent channel index and channel count |
+| $H_t(h,w)$ | Influence map value at latent position $(h,w)$ |
+
+The effect of removing a tag includes changes to the prompt's context.
 
 ## Usage
 
