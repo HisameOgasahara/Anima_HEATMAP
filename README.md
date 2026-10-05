@@ -4,7 +4,7 @@
 
 ComfyUI custom nodes that show where predictions change during generation when a tag is removed from the prompt.
 
-[Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/feature/tag-influence/notebooks/Anima_Heatmap_ComfyUI.ipynb) · [Example workflow](example/tag_influence.json?raw=true) · [Models](https://huggingface.co/circlestone-labs/Anima)
+[Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/feature/tag-influence/notebooks/Anima_Heatmap_ComfyUI.ipynb) · [Example workflow](example/tag_influence.json?raw=true) · [Models](https://huggingface.co/circlestone-labs/Anima) · [Research note (Korean)](docs/tag_influence_research.md)
 
 ## Example
 

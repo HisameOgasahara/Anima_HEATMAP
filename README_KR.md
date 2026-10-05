@@ -4,7 +4,7 @@
 
 프롬프트에서 태그를 뺐을 때, 생성 중 어느 위치의 예측이 얼마나 달라지는지 보여주는 ComfyUI 커스텀 노드.
 
-[Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/feature/tag-influence/notebooks/Anima_Heatmap_ComfyUI.ipynb) · [예제 워크플로](example/tag_influence.json?raw=true) · [모델](https://huggingface.co/circlestone-labs/Anima)
+[Colab](https://colab.research.google.com/github/HisameOgasahara/Anima_HEATMAP/blob/feature/tag-influence/notebooks/Anima_Heatmap_ComfyUI.ipynb) · [예제 워크플로](example/tag_influence.json?raw=true) · [모델](https://huggingface.co/circlestone-labs/Anima) · [연구노트](docs/tag_influence_research.md)
 
 ## 예시
 
