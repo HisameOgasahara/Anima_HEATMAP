@@ -1,0 +1,34 @@
+{
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "branches": {
+    "character": {
+      "latent_exact_match": true,
+      "heatmap_exact_match": true,
+      "heatmap_max_abs_difference": 0.0,
+      "seconds": 114.75045990943909,
+      "comparison": "2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling"
+    },
+    "artist": {
+      "latent_exact_match": true,
+      "heatmap_exact_match": true,
+      "heatmap_max_abs_difference": 0.0,
+      "seconds": 98.25398445129395,
+      "comparison": "2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling"
+    },
+    "sketchbook": {
+      "latent_exact_match": true,
+      "heatmap_exact_match": true,
+      "heatmap_max_abs_difference": 0.0,
+      "seconds": 93.78038215637207,
+      "comparison": "2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling"
+    },
+    "clothing": {
+      "latent_exact_match": true,
+      "heatmap_exact_match": true,
+      "heatmap_max_abs_difference": 0.0,
+      "seconds": 93.73420977592468,
+      "comparison": "2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling"
+    }
+  }
+}

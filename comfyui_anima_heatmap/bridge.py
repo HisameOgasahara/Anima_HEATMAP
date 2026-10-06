@@ -28,7 +28,7 @@ def clean_conditioning(conditioning):
 
 @contextmanager
 def attach_capture(model, session, sigmas):
-    """이 모델 인스턴스의 Q/K 반환만 관찰하고 종료 시 원상 복구한다."""
+    """이 모델 인스턴스의 attention 입력 Q/K를 관찰하고 종료 시 원상 복구한다."""
     from comfy.ldm.anima.model import Anima
 
     diffusion = model.get_model_object("diffusion_model")
@@ -65,7 +65,9 @@ def attach_capture(model, session, sigmas):
         else:
             t, h, w = shape[-3:]
         sigma = float(args["timestep"].max().detach().cpu())
-        step = next((i for i, boundary in enumerate(schedule[:-1]) if sigma >= boundary), total_steps - 1)
+        step = next((i for i, lower in enumerate(schedule[1:])
+                     if sigma > lower and not math.isclose(sigma, lower, rel_tol=1e-6, abs_tol=1e-8)),
+                    total_steps - 1)
         options["anima_heatmap_capture"] = dict(session=marker, labels=list(labels),
             step=step, call=state["call"], sigma=sigma,
             grid=(math.ceil(t / diffusion.patch_temporal), math.ceil(h / diffusion.patch_spatial), math.ceil(w / diffusion.patch_spatial)),
@@ -77,14 +79,13 @@ def attach_capture(model, session, sigmas):
         return apply_model(args["input"], args["timestep"], **c)
 
     def make_hook(original, layer, relation):
-        def observe(module, x, context=None, rope_emb=None, transformer_options=None):
+        def observe(module, q, k, v, transformer_options=None):
             options = transformer_options or {}
-            q, k, v = original(x, context=context, rope_emb=rope_emb, transformer_options=options)
             info = options.get("anima_heatmap_capture", {})
             if info.get("session") != marker:
-                return q, k, v
+                return original(q, k, v, transformer_options=options)
             if not session.wants(relation, info["step"], layer, total_steps, total_layers):
-                return q, k, v
+                return original(q, k, v, transformer_options=options)
             spatial = info["grid"]
             if math.prod(q.shape[1:-2]) != math.prod(spatial) or spatial[0] != 1:
                 raise ValueError(f"Anima 이미지 Q 격자가 예상과 다릅니다: {tuple(q.shape)}")
@@ -105,7 +106,7 @@ def attach_capture(model, session, sigmas):
                     step=info["step"], call=info["call"], layer=layer, grid=spatial,
                     valid_grid=info["valid_grid"], total_steps=total_steps,
                     total_layers=total_layers, sigma=info["sigma"])
-            return q, k, v
+            return original(q, k, v, transformer_options=options)
         return observe
 
     with _HOOK_LOCK:
@@ -115,17 +116,17 @@ def attach_capture(model, session, sigmas):
                 for relation, module in (("image->text", block.cross_attn), ("image->image", block.self_attn)):
                     if relation not in session.config.relations:
                         continue
-                    had_instance_method = "compute_qkv" in module.__dict__
-                    saved = module.__dict__.get("compute_qkv")
-                    original = module.compute_qkv
+                    had_instance_method = "compute_attention" in module.__dict__
+                    saved = module.__dict__.get("compute_attention")
+                    original = module.compute_attention
                     restored.append((module, had_instance_method, saved))
-                    module.compute_qkv = MethodType(make_hook(original, layer, relation), module)
+                    module.compute_attention = MethodType(make_hook(original, layer, relation), module)
             patched.set_model_unet_function_wrapper(model_wrapper)
             yield patched, state
         finally:
             for module, existed, saved in reversed(restored):
                 if existed:
-                    module.compute_qkv = saved
+                    module.compute_attention = saved
                 else:
-                    del module.compute_qkv
+                    del module.compute_attention
 

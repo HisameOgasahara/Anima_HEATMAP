@@ -15,8 +15,15 @@ spec.loader.exec_module(bridge)
 
 
 class Attention:
-    def compute_qkv(self, x, context=None, rope_emb=None, transformer_options=None):
+    def compute_qkv(self, x, context=None, rope_emb=None):
         return x, context, context
+
+    def compute_attention(self, q, k, v, transformer_options=None):
+        return q, k, v
+
+    def forward(self, x, context, transformer_options):
+        q, k, v = self.compute_qkv(x, context)
+        return self.compute_attention(q, k, v, transformer_options=transformer_options)
 
 
 class FakeAnima:
@@ -62,12 +69,13 @@ def test_native_grid_cfg_and_unchanged_qkv(tmp_path, monkeypatch, labels):
             k = torch.randn(count, 5, 2, 4)
 
             def apply(x, timestep, transformer_options):
-                return diffusion.blocks[0].cross_attn.compute_qkv(q, k, transformer_options=transformer_options)
+                return diffusion.blocks[0].cross_attn.forward(q, k, transformer_options)
 
             result = patched.model_options["model_function_wrapper"](apply, dict(
                 input=torch.zeros(count, 4, 1, 4, 6), timestep=torch.tensor([0.5]),
                 c={}, cond_or_uncond=labels))
             assert result[0] is q and result[1] is k
+    assert "compute_attention" not in diffusion.blocks[0].cross_attn.__dict__
     assert "compute_qkv" not in diffusion.blocks[0].cross_attn.__dict__
     assert "model_function_wrapper" not in model.model_options
     assert [r["branch"] for r in session.records] == ["positive" if x == 0 else "negative" for x in labels]
@@ -81,7 +89,7 @@ def test_hooks_restored_on_failure(tmp_path, monkeypatch):
         with CaptureSession(tmp_path) as session:
             with bridge.attach_capture(Model(diffusion), session, [1, 0]) as unused:
                 raise RuntimeError("sampling failure")
-    assert "compute_qkv" not in diffusion.blocks[0].cross_attn.__dict__
+    assert "compute_attention" not in diffusion.blocks[0].cross_attn.__dict__
     assert session.manifest["status"] == "failed"
 
 
@@ -91,7 +99,7 @@ def test_negative_only_is_not_recorded_as_positive(tmp_path, monkeypatch):
     with CaptureSession(tmp_path) as session:
         with bridge.attach_capture(Model(diffusion), session, [1, 0]) as (patched, _):
             def apply(x, timestep, transformer_options):
-                return diffusion.blocks[0].cross_attn.compute_qkv(
+                return diffusion.blocks[0].cross_attn.forward(
                     torch.zeros(1, 1, 2, 3, 2, 4), torch.zeros(1, 5, 2, 4),
                     transformer_options=transformer_options)
             patched.model_options["model_function_wrapper"](apply, dict(input=torch.zeros(1, 4, 4, 6),

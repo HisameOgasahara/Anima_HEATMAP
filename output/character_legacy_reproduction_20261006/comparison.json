@@ -1,0 +1,65 @@
+{
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "custom_node": "C:\\Projects\\torch\\Anima_HEATMAP\\comfyui_anima_heatmap\\influence.py",
+  "cases": {
+    "kanao": {
+      "latent_exact_match": true,
+      "latent_max_abs_difference": 0.0,
+      "branches": {
+        "character": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        },
+        "artist": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        },
+        "sketchbook": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        },
+        "clothing": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        }
+      },
+      "seconds": 167.94565773010254,
+      "comparison": "2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling",
+      "generated_pixel_exact_match": true
+    },
+    "ai_oshi_no_ko": {
+      "latent_exact_match": true,
+      "latent_max_abs_difference": 0.0,
+      "branches": {
+        "character": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        },
+        "artist": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        },
+        "sketchbook": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        },
+        "clothing": {
+          "heatmap_exact_match": true,
+          "heatmap_max_abs_difference": 0.0,
+          "heatmap_rms_difference": 0.0
+        }
+      },
+      "seconds": 163.98196601867676,
+      "comparison": "2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling",
+      "generated_pixel_exact_match": true
+    }
+  }
+}

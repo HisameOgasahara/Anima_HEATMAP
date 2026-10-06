@@ -1,0 +1,15 @@
+{
+  "flags": [
+    "--fp16-unet",
+    "--fp16-text-enc",
+    "--fp16-vae",
+    "--use-pytorch-cross-attention"
+  ],
+  "torch": "2.11.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 3050",
+  "unet_dtype": "torch.float16",
+  "te_configured_dtypes": "{torch.bfloat16}",
+  "vae_dtype": "torch.float16",
+  "attention_backend": "MATH",
+  "math_sdpa_calls": 6961
+}

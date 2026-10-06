@@ -1,0 +1,279 @@
+{
+  "generated": {
+    "exact": false,
+    "mae": 0.016042813754845724,
+    "rmse": 0.04017762242327392,
+    "correlation": 0.9869634032475212
+  },
+  "previous_er_sde_generated": {
+    "exact": false,
+    "mae": 0.2508146729297321,
+    "rmse": 0.3203686844118567,
+    "correlation": 0.31401079880976174
+  },
+  "heatmaps": {
+    "character": {
+      "steps": [
+        {
+          "step": 1,
+          "exact": false,
+          "mae": 0.007792281681869515,
+          "rmse": 0.009059264166842928,
+          "correlation": 0.9985167917638555,
+          "local_mean": 0.1960986703634262,
+          "colab_mean": 0.20370104908943176
+        },
+        {
+          "step": 4,
+          "exact": false,
+          "mae": 0.007295155370892412,
+          "rmse": 0.011059234400634374,
+          "correlation": 0.9984754809822645,
+          "local_mean": 0.2061242163181305,
+          "colab_mean": 0.20224831998348236
+        },
+        {
+          "step": 8,
+          "exact": false,
+          "mae": 0.0056173082711421345,
+          "rmse": 0.009911953969679749,
+          "correlation": 0.998453059772978,
+          "local_mean": 0.13828228414058685,
+          "colab_mean": 0.1377793699502945
+        },
+        {
+          "step": 12,
+          "exact": false,
+          "mae": 0.011367359865632835,
+          "rmse": 0.0200372889513888,
+          "correlation": 0.9838385033739103,
+          "local_mean": 0.0822247862815857,
+          "colab_mean": 0.07687357813119888
+        },
+        {
+          "step": 16,
+          "exact": false,
+          "mae": 0.013053191910300119,
+          "rmse": 0.02459432726914176,
+          "correlation": 0.9637895842626285,
+          "local_mean": 0.055547043681144714,
+          "colab_mean": 0.054058149456977844
+        },
+        {
+          "step": 20,
+          "exact": false,
+          "mae": 0.009277247088276668,
+          "rmse": 0.021480370537201292,
+          "correlation": 0.8641343234896312,
+          "local_mean": 0.029792243614792824,
+          "colab_mean": 0.025879662483930588
+        }
+      ],
+      "mean_rmse": 0.016023739882481482,
+      "previous_er_sde_mean_rmse": 0.093600192309072,
+      "reduction_percent": 82.8806549568078,
+      "temporal_mean_correlation": 0.9985914605846925,
+      "previous_euler_auto_mean_rmse": 0.01549266208465519,
+      "change_vs_euler_auto_percent": 3.427931203329493
+    },
+    "artist": {
+      "steps": [
+        {
+          "step": 1,
+          "exact": false,
+          "mae": 0.004965072659593451,
+          "rmse": 0.005976999644744644,
+          "correlation": 0.999840633516455,
+          "local_mean": 0.6143509745597839,
+          "colab_mean": 0.6093916296958923
+        },
+        {
+          "step": 4,
+          "exact": false,
+          "mae": 0.004054443770663144,
+          "rmse": 0.005849759622713219,
+          "correlation": 0.9995483965220517,
+          "local_mean": 0.5063736438751221,
+          "colab_mean": 0.5058523416519165
+        },
+        {
+          "step": 8,
+          "exact": false,
+          "mae": 0.007381652122084369,
+          "rmse": 0.012117407390630705,
+          "correlation": 0.99756725651868,
+          "local_mean": 0.34898677468299866,
+          "colab_mean": 0.3513028621673584
+        },
+        {
+          "step": 12,
+          "exact": false,
+          "mae": 0.024504280907359476,
+          "rmse": 0.05391707598735217,
+          "correlation": 0.9480480931958272,
+          "local_mean": 0.23148921132087708,
+          "colab_mean": 0.21761763095855713
+        },
+        {
+          "step": 16,
+          "exact": false,
+          "mae": 0.023423697518542893,
+          "rmse": 0.043268443638488176,
+          "correlation": 0.8974916262553156,
+          "local_mean": 0.1355205774307251,
+          "colab_mean": 0.13729731738567352
+        },
+        {
+          "step": 20,
+          "exact": false,
+          "mae": 0.01614526791626753,
+          "rmse": 0.02548178591967652,
+          "correlation": 0.8074154731363312,
+          "local_mean": 0.07527239620685577,
+          "colab_mean": 0.07962074130773544
+        }
+      ],
+      "mean_rmse": 0.024435245367267572,
+      "previous_er_sde_mean_rmse": 0.14527023077160858,
+      "reduction_percent": 83.17945442952848,
+      "temporal_mean_correlation": 0.9995189212634223,
+      "previous_euler_auto_mean_rmse": 0.02242666828074756,
+      "change_vs_euler_auto_percent": 8.956199206122362
+    },
+    "sketchbook": {
+      "steps": [
+        {
+          "step": 1,
+          "exact": false,
+          "mae": 0.004444762710110499,
+          "rmse": 0.005889575166203786,
+          "correlation": 0.9920446442016806,
+          "local_mean": 0.07045308500528336,
+          "colab_mean": 0.07447890937328339
+        },
+        {
+          "step": 4,
+          "exact": false,
+          "mae": 0.0029969818027772268,
+          "rmse": 0.0042924519703452626,
+          "correlation": 0.9974037904863843,
+          "local_mean": 0.06546410918235779,
+          "colab_mean": 0.0644884780049324
+        },
+        {
+          "step": 8,
+          "exact": false,
+          "mae": 0.007351464557985085,
+          "rmse": 0.013089157720669837,
+          "correlation": 0.9935368070378955,
+          "local_mean": 0.07597188651561737,
+          "colab_mean": 0.07722846418619156
+        },
+        {
+          "step": 12,
+          "exact": false,
+          "mae": 0.01043444693955777,
+          "rmse": 0.020271980653799756,
+          "correlation": 0.9785890256364261,
+          "local_mean": 0.053514670580625534,
+          "colab_mean": 0.05322775989770889
+        },
+        {
+          "step": 16,
+          "exact": false,
+          "mae": 0.012608350915038022,
+          "rmse": 0.027343132537183304,
+          "correlation": 0.9235193879747144,
+          "local_mean": 0.040480151772499084,
+          "colab_mean": 0.0386258065700531
+        },
+        {
+          "step": 20,
+          "exact": false,
+          "mae": 0.007076508376573347,
+          "rmse": 0.014489540174160263,
+          "correlation": 0.8372274584549855,
+          "local_mean": 0.021160755306482315,
+          "colab_mean": 0.022818025201559067
+        }
+      ],
+      "mean_rmse": 0.0142293063703937,
+      "previous_er_sde_mean_rmse": 0.07456617088830925,
+      "reduction_percent": 80.91720923727273,
+      "temporal_mean_correlation": 0.9952907958718795,
+      "previous_euler_auto_mean_rmse": 0.01497790782494976,
+      "change_vs_euler_auto_percent": -4.998037531710942
+    },
+    "clothing": {
+      "steps": [
+        {
+          "step": 1,
+          "exact": false,
+          "mae": 0.0030794589597628315,
+          "rmse": 0.003843858730617302,
+          "correlation": 0.99972435414896,
+          "local_mean": 0.1786186397075653,
+          "colab_mean": 0.18123267590999603
+        },
+        {
+          "step": 4,
+          "exact": false,
+          "mae": 0.004550686841601875,
+          "rmse": 0.006319310423997338,
+          "correlation": 0.9988527786657461,
+          "local_mean": 0.17496435344219208,
+          "colab_mean": 0.17459169030189514
+        },
+        {
+          "step": 8,
+          "exact": false,
+          "mae": 0.007795883085173192,
+          "rmse": 0.013402337010088056,
+          "correlation": 0.9961919813168059,
+          "local_mean": 0.12837553024291992,
+          "colab_mean": 0.12493570894002914
+        },
+        {
+          "step": 12,
+          "exact": false,
+          "mae": 0.015414295610148215,
+          "rmse": 0.0296213071532124,
+          "correlation": 0.9281278036662766,
+          "local_mean": 0.07659789174795151,
+          "colab_mean": 0.07462833821773529
+        },
+        {
+          "step": 16,
+          "exact": false,
+          "mae": 0.018255877812385007,
+          "rmse": 0.04167389788453602,
+          "correlation": 0.7197664321458493,
+          "local_mean": 0.05300680547952652,
+          "colab_mean": 0.050034090876579285
+        },
+        {
+          "step": 20,
+          "exact": false,
+          "mae": 0.010277306946475597,
+          "rmse": 0.021209816209850827,
+          "correlation": 0.7230283591422855,
+          "local_mean": 0.030339572578668594,
+          "colab_mean": 0.027987392619252205
+        }
+      ],
+      "mean_rmse": 0.019345087902050324,
+      "previous_er_sde_mean_rmse": 0.08036625030210519,
+      "reduction_percent": 75.92884098818831,
+      "temporal_mean_correlation": 0.9996885359130679,
+      "previous_euler_auto_mean_rmse": 0.01674515014611902,
+      "change_vs_euler_auto_percent": 15.526512054201458
+    }
+  },
+  "previous_euler_auto_generated": {
+    "exact": false,
+    "mae": 0.011335661568313225,
+    "rmse": 0.03394904930474816,
+    "correlation": 0.990702024576041
+  },
+  "colab_backend_verification": "MATH assumed from user running provided corrected launcher; PNG metadata contains prompt/workflow only, not runtime backend"
+}

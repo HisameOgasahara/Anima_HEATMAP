@@ -36,8 +36,8 @@ class InfluenceGuider(comfy.samplers.CFGGuider):
         positive, uncond = comfy.samplers.calc_cond_batch(
             self.inner_model, [self.conds["positive"], negative], x, timestep, options)
         original_prediction = positive if self.cfg == 1 else uncond + (positive - uncond) * self.cfg
-        # 태그 비교의 두 긍정 조건은 동일한 단독 호출 방식으로 평가한다.
-        # 생성 경로는 기존 CFG 예측을 그대로 사용한다.
+        # 단독 호출 기준은 batch 수치 차이를 기록하는 진단에만 사용한다.
+        # 태그 영향은 10/4 실험처럼 원래 긍정·부정 호출의 CFG 예측을 기준으로 한다.
         baseline_positive = positive if self.cfg == 1 else comfy.samplers.calc_cond_batch(
             self.inner_model, [self.conds["positive"]], x, timestep, options)[0]
         baseline_prediction = baseline_positive if self.cfg == 1 else uncond + (baseline_positive - uncond) * self.cfg
@@ -59,7 +59,7 @@ class InfluenceGuider(comfy.samplers.CFGGuider):
             ablated = comfy.samplers.calc_cond_batch(self.inner_model,
                 [self.conds[f"ablated_{name}"]], x, timestep, options)[0]
             ablated_prediction = ablated if self.cfg == 1 else uncond + (ablated - uncond) * self.cfg
-            delta = baseline_prediction.float() - ablated_prediction.float()
+            delta = original_prediction.float() - ablated_prediction.float()
             velocity_delta = delta / sigma
             denoised_map = torch.linalg.vector_norm(delta, dim=1)
             velocity_map = torch.linalg.vector_norm(velocity_delta, dim=1)
@@ -98,7 +98,7 @@ def sample_influence(model, positive, negative, ablated, latent_image, *, seed,
     return output, dict(records=guider.records, sigmas=schedule.tolist(),
         configured_steps=steps, total_steps=len(schedule) - 1,
         step_semantics="noise schedule interval, not model-call count",
-        comparison="positive-only baseline versus positive-only ablation; original CFG advances sampling",
+        comparison="2026-10-04 legacy: original positive/negative CFG versus positive-only ablation; original CFG advances sampling",
         baseline_velocity_maps=np.stack(guider.baseline_velocity_maps),
         denoised_maps=np.stack(guider.denoised_maps), velocity_maps=np.stack(guider.velocity_maps),
         targets={name: dict(records=target["records"],
