@@ -26,6 +26,10 @@ class InfluenceGuider(comfy.samplers.CFGGuider):
         self.velocity_maps = first["velocity_maps"]
         self.baseline_velocity_maps = []
 
+    def predict_ablation(self, name, x, timestep, options):
+        return comfy.samplers.calc_cond_batch(self.inner_model,
+            [self.conds[f"ablated_{name}"]], x, timestep, options)[0]
+
     def predict_noise(self, x, timestep, model_options=None, seed=None):
         options = model_options or {}
         unsupported = ("sampler_cfg_function", "sampler_pre_cfg_function",
@@ -56,8 +60,7 @@ class InfluenceGuider(comfy.samplers.CFGGuider):
             (original_prediction.float() - baseline_prediction.float()) / sigma, dim=1)
         self.baseline_velocity_maps.append(baseline_map.detach().cpu().numpy())
         for name, target in self.targets.items():
-            ablated = comfy.samplers.calc_cond_batch(self.inner_model,
-                [self.conds[f"ablated_{name}"]], x, timestep, options)[0]
+            ablated = self.predict_ablation(name, x, timestep, options)
             ablated_prediction = ablated if self.cfg == 1 else uncond + (ablated - uncond) * self.cfg
             delta = baseline_prediction.float() - ablated_prediction.float()
             velocity_delta = delta / sigma
@@ -75,7 +78,8 @@ class InfluenceGuider(comfy.samplers.CFGGuider):
 
 
 def sample_influence(model, positive, negative, ablated, latent_image, *, seed,
-                     steps, cfg, sampler_name, scheduler, denoise=1.0):
+                     steps, cfg, sampler_name, scheduler, denoise=1.0,
+                     guider_factory=InfluenceGuider):
     import comfy.utils
     import latent_preview
 
@@ -85,7 +89,7 @@ def sample_influence(model, positive, negative, ablated, latent_image, *, seed,
     schedule = comfy.samplers.KSampler(model, steps=steps, device=model.load_device,
         sampler=sampler_name, scheduler=scheduler, denoise=denoise,
         model_options=model.model_options).sigmas
-    guider = InfluenceGuider(model, positive, negative, ablated, cfg, schedule.tolist())
+    guider = guider_factory(model, positive, negative, ablated, cfg, schedule.tolist())
     preview = latent_preview.prepare_callback(model, len(schedule) - 1)
     with torch.inference_mode():
         samples = guider.sample(noise, latent, comfy.samplers.sampler_object(sampler_name),
