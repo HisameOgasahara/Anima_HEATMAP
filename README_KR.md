@@ -93,7 +93,3 @@ uv pip install --python .venv\Scripts\python.exe -e .
 - [ComfyUI Anima](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/anima/model.py)
 - [attention-map-diffusers](https://github.com/wooyeolBaek/attention-map-diffusers)
 - [ComfyUI DAAM](https://github.com/nisaruj/comfyui-daam)
-
-## 라이선스
-
-[MIT](LICENSE)
